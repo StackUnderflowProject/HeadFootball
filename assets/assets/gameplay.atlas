@@ -1,0 +1,216 @@
+
+gameplay.png
+size: 8192, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+ball
+  rotate: false
+  xy: 2, 54
+  size: 130, 130
+  orig: 130, 130
+  offset: 0, 0
+  index: -1
+cpu
+  rotate: false
+  xy: 2, 186
+  size: 194, 259
+  orig: 194, 259
+  offset: 0, 0
+  index: -1
+field
+  rotate: false
+  xy: 2, 689
+  size: 2000, 1126
+  orig: 2000, 1126
+  offset: 0, 0
+  index: -1
+goal
+  rotate: false
+  xy: 632, 281
+  size: 82, 164
+  orig: 82, 164
+  offset: 0, 0
+  index: -1
+goalText
+  rotate: false
+  xy: 2, 447
+  size: 800, 240
+  orig: 800, 240
+  offset: 0, 0
+  index: -1
+head1
+  rotate: false
+  xy: 5032, 1206
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head2
+  rotate: false
+  xy: 5259, 1433
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head3
+  rotate: false
+  xy: 425, 240
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head4
+  rotate: false
+  xy: 1258, 482
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head5
+  rotate: false
+  xy: 5032, 999
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head6
+  rotate: false
+  xy: 5466, 1433
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head7
+  rotate: false
+  xy: 1465, 482
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+head8
+  rotate: false
+  xy: 5032, 792
+  size: 205, 205
+  orig: 205, 205
+  offset: 0, 0
+  index: -1
+icon
+  rotate: false
+  xy: 4006, 791
+  size: 1024, 1024
+  orig: 1024, 1024
+  offset: 0, 0
+  index: -1
+kickoffText
+  rotate: false
+  xy: 5032, 1640
+  size: 780, 175
+  orig: 780, 175
+  offset: 0, 0
+  index: -1
+maribor
+  rotate: false
+  xy: 804, 462
+  size: 225, 225
+  orig: 225, 225
+  offset: 0, 0
+  index: -1
+olimpija
+  rotate: false
+  xy: 5032, 1413
+  size: 225, 225
+  orig: 225, 225
+  offset: 0, 0
+  index: -1
+p1
+  rotate: false
+  xy: 198, 220
+  size: 225, 225
+  orig: 225, 225
+  offset: 0, 0
+  index: -1
+p2
+  rotate: false
+  xy: 1031, 462
+  size: 225, 225
+  orig: 225, 225
+  offset: 0, 0
+  index: -1
+scoreboard
+  rotate: false
+  xy: 4006, 714
+  size: 300, 75
+  orig: 300, 75
+  offset: 0, 0
+  index: -1
+selectText
+  rotate: false
+  xy: 5814, 1757
+  size: 292, 58
+  orig: 292, 58
+  offset: 0, 0
+  index: -1
+shoe1
+  rotate: false
+  xy: 5673, 1588
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe2
+  rotate: false
+  xy: 1672, 637
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe3
+  rotate: false
+  xy: 4308, 739
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe4
+  rotate: false
+  xy: 5814, 1705
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe5
+  rotate: false
+  xy: 6108, 1765
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe6
+  rotate: false
+  xy: 2, 2
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe7
+  rotate: false
+  xy: 5673, 1536
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+shoe8
+  rotate: false
+  xy: 1672, 585
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+stadium
+  rotate: false
+  xy: 2004, 689
+  size: 2000, 1126
+  orig: 2000, 1126
+  offset: 0, 0
+  index: -1
