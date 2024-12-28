@@ -10,7 +10,7 @@ com.badlogic.gdx.graphics.Color: {
 },
 com.badlogic.gdx.graphics.g2d.BitmapFont: {
 	font-button: { file: pixel2l.fnt },
-	font-label: { file: pixel2l.fnt },
+	font-label: { file: font-label.fnt },
 	font-title: { file: thaleah.fnt }
 },
 com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {

@@ -37,7 +37,6 @@ public class RegionNames {
         public static final String MARIBOR = "maribor";
         public static final String P1 = "p1";
         public static final String CPU = "cpu";
-
         public static final String P2 = "p2";
 
 
@@ -45,6 +44,8 @@ public class RegionNames {
 
 
     }
+    public static final String SKIN = "";
+
     private RegionNames() {
     }
 }
