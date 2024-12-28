@@ -40,7 +40,7 @@ public class SoccerGame extends Game {
 
         batch = new SpriteBatch();
 
-        setScreen(new SelectionScreen(this,new Team("Maribor",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),new Team("Olimpija",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA)),Mode.LOCALMULTIPLAYER));
-        //setScreen(new SelectionScreen(this));
+        //setScreen(new SelectionScreen(this,new Team("Maribor",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),new Team("Olimpija",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA)),Mode.LOCALMULTIPLAYER));
+        setScreen(new GameScreen(this));
     }
 }
