@@ -33,14 +33,16 @@ public class SoccerGame extends Game {
         assetManager.load(AssetDescriptors.GAMEPLAY);
         assetManager.load(AssetDescriptors.TITLE_FONT);
         assetManager.load(AssetDescriptors.FONT);
-
+        assetManager.load(AssetDescriptors.FONT1);
+        assetManager.load(AssetDescriptors.FONT2);
         assetManager.finishLoading();
 
         assetManager.getLogger().setLevel(Logger.ERROR);
 
         batch = new SpriteBatch();
 
-        //setScreen(new SelectionScreen(this,new Team("Maribor",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),new Team("Olimpija",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA)),Mode.LOCALMULTIPLAYER));
-        setScreen(new GameScreen(this));
+        setScreen(new SelectionScreen(this,new Team("Maribor",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),new Team("Olimpija",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA)),Mode.LOCALMULTIPLAYER));
+
+
     }
 }

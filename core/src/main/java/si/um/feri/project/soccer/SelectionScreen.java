@@ -7,6 +7,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -49,7 +50,7 @@ public class SelectionScreen extends ScreenAdapter {
         this.team2 = team2;
         this.mode = mode;
         stage = new Stage(viewport, game.getBatch());
-
+        stage.setDebugAll(true);
         assetManager = game.getAssetManager();
 
         TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
@@ -62,10 +63,14 @@ public class SelectionScreen extends ScreenAdapter {
         gameplayAtlas = assetManager.get(AssetDescriptors.GAMEPLAY);
         Table rootTable = new Table();
         rootTable.setFillParent(true);
+        rootTable.setBackground(new TextureRegionDrawable(gameplayAtlas.findRegion("t")));
         stage.addActor(rootTable);
         rootTable.debug();
+        skin.getFont("font-label").setColor(Color.BLACK);
+
         // Title Label
         Label title = new Label("Player Select Screen", skin);
+        title.setColor(Color.BLACK);
         rootTable.add(title).colspan(2).pad(20);
         rootTable.row();
 
@@ -81,35 +86,65 @@ public class SelectionScreen extends ScreenAdapter {
         Table team1Table = createTeamBox(team1,player1);
         Table team2Table = createTeamBox(team2,player1);
 
-        rootTable.add(team1Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(20);
-        rootTable.add(team2Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(20);
+        rootTable.add(team1Table).minWidth(160).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
+        rootTable.add(team2Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
         // Add Player Icons under the Team Tables
         rootTable.row(); // Move to the next row for player icons
 
         playerIconsTable.add(player2).pad(10);
         playerIconsTable.add(player1).pad(10);
 
-        rootTable.add(playerIconsTable).minSize(70).colspan(2).center().padTop(10); // Align icons below both team tables
+        rootTable.add(playerIconsTable).minSize(70).colspan(2).center().padTop(10).row(); // Align icons below both team tables
+        TextButton confirmButton = new TextButton("Confirm Selection", skin);
+        confirmButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Handle selection confirmation
+                game.setScreen(new GameScreen(
+            game,
+            new Team("Maribor", assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),
+            new Team("Olimpija", assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA))
+        ));
+
+            }
+        });
+        rootTable.add(confirmButton).colspan(2).center().padTop(20); // Center the button and add some padding
         // Add DragAndDrop functionality
         //setupDragAndDrop(team1Table, team2Table);
         //stage.addActor(createUi())
         // Gdx.input.setInputProcessor(stage);
+
         if(mode == Mode.SINGLEPLAYER){
-            Gdx.input.setInputProcessor(new PlayerInputProcessorCpu(player1,player2,Input.Keys.RIGHT,Input.Keys.LEFT,team1Table,team2Table,playerIconsTable));
+            // Create an InputMultiplexer
+            InputMultiplexer inputMultiplexer = new InputMultiplexer();
+
+// Add the custom player input processor (which handles your game controls)
+            inputMultiplexer.addProcessor(new PlayerInputProcessorCpu(player1, player2,
+                Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table, playerIconsTable));
+
+// Add the Stage's input processor (which handles UI input, such as button clicks)
+            inputMultiplexer.addProcessor(stage); // Make sure you pass the Stage instance here
+
+// Set the InputProcessor to the multiplexer
+            Gdx.input.setInputProcessor(inputMultiplexer);
+
 
         } else if (mode == Mode.LOCALMULTIPLAYER) {
-            setupPlayerInput(player1,player2,team1Table,team2Table,playerIconsTable);
+            InputMultiplexer a = setupPlayerInput(player1, player2, team1Table, team2Table, playerIconsTable);
+            a.addProcessor(stage);
+            Gdx.input.setInputProcessor(a);
 
         }
 
     }
-    private void setupPlayerInput(Table player1Icon, Table player2Icon,Table team2Table, Table team1Table, Table playerTable) {
+    private InputMultiplexer setupPlayerInput(Table player1Icon, Table player2Icon,Table team2Table, Table team1Table, Table playerTable) {
         // Create player states
 
-        Gdx.input.setInputProcessor(new InputMultiplexer(
+        return new InputMultiplexer(
             new PlayerInputProcessor1(player1Icon,player2Icon,Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table,playerTable),
            new PlayerInputProcessor1(player2Icon,player1Icon,Input.Keys.D, Input.Keys.A, team1Table, team2Table,playerTable)
-        ));
+
+        );
     }
 
 
@@ -282,10 +317,12 @@ public class SelectionScreen extends ScreenAdapter {
         teamTable.debug(); // Enables debugging to visualize the layout.
 
         // Create a sub-table for the team name with a black background.
-        Table nameTable = new Table();
-        nameTable.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture(createBlackPixmap()))));
+        Table nameTable = new Table().debugTable();
+        //teamTable.setBackground(new TextureRegionDrawable());
         Label teamLabel = new Label(team.getName(), skin);
-        nameTable.add(teamLabel).center().expand().pad(5);
+        teamLabel.setColor(Color.BLACK);
+
+        nameTable.add(teamLabel).center().expandX().pad(0);
 
         // Create a sub-table for the team photo background.
         Table photoTable = new Table();
@@ -303,9 +340,9 @@ public class SelectionScreen extends ScreenAdapter {
 
         //photoTable.add(placeholder1).expand().fill().row();
         // Add the sub-tables to the main teamTable.
-        teamTable.add(nameTable).fillX().height(50).padBottom(5); // Team name section with fixed height.
+        teamTable.add(nameTable).padBottom(5); // Team name section with fixed height.
         teamTable.row();
-        teamTable.add(photoTable).growX().expandY().fillY().row(); // Team photo section fills the remaining space.
+        teamTable.add(photoTable).growX().maxWidth(130).maxHeight(130).expandY().fillY().row(); // Team photo section fills the remaining space.
         //teamTable.add(placeholder1).size(player1.getWidth(), player1.getHeight()).expand().fill().row();
 
         teamTable.add(placeholder1).minSize(70).expand().fillX().row();
@@ -364,7 +401,6 @@ public class SelectionScreen extends ScreenAdapter {
 
     private Actor createUi() {
         BitmapFont font = assetManager.get(AssetDescriptors.TITLE_FONT);
-
 
         stage.addActor(new Image(gameplayAtlas.findRegion(RegionNames.Textures.FIELD)));
         // Create the Window
