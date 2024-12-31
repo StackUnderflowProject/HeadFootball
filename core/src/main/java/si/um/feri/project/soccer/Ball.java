@@ -21,6 +21,8 @@ public class Ball extends Sprite {
         setRegion(region);
         resetState = pos;
         defineBall(pos,world,size);
+        Vector2 position = body.getPosition();
+        setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
     }
     public void resetBall(){
         body.setTransform(resetState.x, resetState.y, 0);
@@ -68,7 +70,6 @@ public class Ball extends Sprite {
     }
 
     public void update() {
-        System.out.println(body.getLinearVelocity().x);
 
         Vector2 position = body.getPosition();
         setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
