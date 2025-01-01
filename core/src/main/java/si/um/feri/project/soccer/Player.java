@@ -53,7 +53,7 @@ public class Player extends Sprite {
         setPosition(pos.x, pos.y + height /2);
         createHead(world, width, height, pos);  // Create the head body
         Vector2 position = headBody.getPosition();
-        setPosition(position.x - getWidth() / 2 , position.y - getHeight() / 2);
+        setPosition(position.x - width / 2 , position.y - height / 2);
         this.resetState = pos;
         this.leftKey = leftKey;
         this.rightKey = rightKey;
@@ -87,7 +87,7 @@ public class Player extends Sprite {
 
     }
     public void resetPlayer(){
-        headBody.setTransform(resetState.x, resetState.y, 0);
+        headBody.setTransform(resetState.x+getWidth(), resetState.y, 0);
 
         // Reset velocity and rotation
         headBody.setLinearVelocity(Vector2.Zero);

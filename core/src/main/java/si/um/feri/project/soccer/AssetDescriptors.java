@@ -15,6 +15,8 @@ public class AssetDescriptors {
 
     public static final AssetDescriptor<BitmapFont> FONT =
         new AssetDescriptor<>(AssetsPaths.FONT,BitmapFont.class);
+    public static final AssetDescriptor<BitmapFont> GAMEOVER =
+        new AssetDescriptor<>(AssetsPaths.GOVERFONT,BitmapFont.class);
     public static final AssetDescriptor<BitmapFont> FONT1 =
         new AssetDescriptor<>(AssetsPaths.FONT1,BitmapFont.class);
     public static final AssetDescriptor<BitmapFont> FONT2 =
