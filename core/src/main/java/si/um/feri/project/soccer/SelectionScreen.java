@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -24,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -38,19 +38,21 @@ public class SelectionScreen extends ScreenAdapter {
     private Viewport viewport;
     private Stage stage;
     private Skin skin;
-    private Team team1;
+    private Team team11;
     private Team team2;
+    private PlayerInputProcessor1 ip1;
+    private PlayerInputProcessor1 ip2;
+    private PlayerInputProcessorCpu ipcpu;
     private Mode mode;
     private TextureAtlas gameplayAtlas;
 
     public SelectionScreen(SoccerGame game,Team team1,Team team2,Mode mode) {
         this.game = game;
         viewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
-        this.team1 = team1;
+        this.team11 = team1;
         this.team2 = team2;
         this.mode = mode;
         stage = new Stage(viewport, game.getBatch());
-        stage.setDebugAll(true);
         assetManager = game.getAssetManager();
 
         TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
@@ -65,7 +67,6 @@ public class SelectionScreen extends ScreenAdapter {
         rootTable.setFillParent(true);
         rootTable.setBackground(new TextureRegionDrawable(gameplayAtlas.findRegion("t")));
         stage.addActor(rootTable);
-        rootTable.debug();
         skin.getFont("font-label").setColor(Color.BLACK);
 
         // Title Label
@@ -83,7 +84,7 @@ public class SelectionScreen extends ScreenAdapter {
             player2 = createPlayerIcon("Player 2", RegionNames.Textures.CPU).pad(10);
         }
         // Create Team Boxes
-        Table team1Table = createTeamBox(team1,player1);
+        Table team1Table = createTeamBox(team11,player1);
         Table team2Table = createTeamBox(team2,player1);
 
         rootTable.add(team1Table).minWidth(160).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
@@ -100,32 +101,54 @@ public class SelectionScreen extends ScreenAdapter {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Handle selection confirmation
-                game.setScreen(new GameScreen(
-            game,
-            new Team("Maribor", assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),
-            new Team("Olimpija", assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA))
-        ));
+                if(mode == Mode.LOCALMULTIPLAYER){
+                    if(ip1.getPlayer1Team() == ip2.getPlayer1Team()){
+                        if(ip2.getPlayer1Team() != ip2.getInital()){
+                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                            return;
+                        }
+                        if(ip1.getPlayer1Team() != ip1.getInital()){
+                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                            return;
+
+                        }
+                        else{
+                            game.setScreen(new GameScreen(game,team11,team2,mode));
+                        }
+                    }
+                    else{
+                        if(ip1.getPlayer1Team() == 1){
+                            game.setScreen(new GameScreen(game,team11,team2,mode));
+                        }
+                        else{
+                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                        }
+                    }
+                }
+                if(mode == Mode.SINGLEPLAYER){
+                    if(ipcpu.getPl() == 1){
+                        game.setScreen(new GameScreen(game,team11,team2,mode));
+                    }
+                    else{
+                        game.setScreen(new GameScreen(game,team2,team11,mode));
+
+                    }
+                }
+
 
             }
         });
         rootTable.add(confirmButton).colspan(2).center().padTop(20); // Center the button and add some padding
-        // Add DragAndDrop functionality
-        //setupDragAndDrop(team1Table, team2Table);
-        //stage.addActor(createUi())
-        // Gdx.input.setInputProcessor(stage);
 
         if(mode == Mode.SINGLEPLAYER){
-            // Create an InputMultiplexer
             InputMultiplexer inputMultiplexer = new InputMultiplexer();
 
-// Add the custom player input processor (which handles your game controls)
-            inputMultiplexer.addProcessor(new PlayerInputProcessorCpu(player1, player2,
-                Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table, playerIconsTable));
+            ipcpu = new PlayerInputProcessorCpu(player1, player2,
+                Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table, playerIconsTable);
+            inputMultiplexer.addProcessor(ipcpu);
 
-// Add the Stage's input processor (which handles UI input, such as button clicks)
             inputMultiplexer.addProcessor(stage); // Make sure you pass the Stage instance here
 
-// Set the InputProcessor to the multiplexer
             Gdx.input.setInputProcessor(inputMultiplexer);
 
 
@@ -138,11 +161,11 @@ public class SelectionScreen extends ScreenAdapter {
 
     }
     private InputMultiplexer setupPlayerInput(Table player1Icon, Table player2Icon,Table team2Table, Table team1Table, Table playerTable) {
-        // Create player states
+        ip1 = new PlayerInputProcessor1(player1Icon,player2Icon,Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table,playerTable,1);
+        ip2 =            new PlayerInputProcessor1(player2Icon,player1Icon,Input.Keys.D, Input.Keys.A, team1Table, team2Table,playerTable,2);
 
         return new InputMultiplexer(
-            new PlayerInputProcessor1(player1Icon,player2Icon,Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table,playerTable),
-           new PlayerInputProcessor1(player2Icon,player1Icon,Input.Keys.D, Input.Keys.A, team1Table, team2Table,playerTable)
+            ip1,ip2
 
         );
     }
@@ -150,11 +173,11 @@ public class SelectionScreen extends ScreenAdapter {
 
     private static class PlayerInputProcessor1 implements InputProcessor {
         private final int leftKey, rightKey;
-        private Table team1, team2, playerTable;
+         private Table team1, team2, playerTable;
         private Table selectedTeam = null;
         private final Table player1,player2;
-
-        public PlayerInputProcessor1(Table player,Table player2, int leftKey, int rightKey, Table team1, Table team2, Table playerTable) {
+        private int player1Team,inital;
+        public PlayerInputProcessor1(Table player,Table player2, int leftKey, int rightKey, Table team1, Table team2, Table playerTable,int pl) {
             this.player1 = player;
             this.player2 = player2;
             this.leftKey = leftKey;
@@ -162,8 +185,15 @@ public class SelectionScreen extends ScreenAdapter {
             this.team1 = team1;
             this.team2 = team2;
             this.playerTable = playerTable;
+            this.player1Team = pl;
+            this.inital = pl;
         }
-
+        public int getPlayer1Team(){
+            return player1Team;
+        }
+        public int getInital(){
+            return inital;
+        }
         @Override
         public boolean keyDown(int keycode) {
             if (keycode == leftKey) {
@@ -187,6 +217,7 @@ public class SelectionScreen extends ScreenAdapter {
 
                         // Reset the selected team reference.
                         selectedTeam = null;
+                        player1Team = inital;
                     }
                     else{
                         if(team1.findActor("placeholder") != null){
@@ -194,6 +225,7 @@ public class SelectionScreen extends ScreenAdapter {
                             Cell cell = team1.getCells().get(team1.getCells().size-1);
                             cell.setActor(player1);
                             selectedTeam = team1;
+                            player1Team = 2;
                         }
 
                     }
@@ -223,6 +255,7 @@ public class SelectionScreen extends ScreenAdapter {
 
                         // Reset the selected team reference.
                         selectedTeam = null;
+                        player1Team = inital;
                     }
                     else{
                         if(team2.findActor("placeholder") != null){
@@ -230,6 +263,7 @@ public class SelectionScreen extends ScreenAdapter {
                             Cell cell = team2.getCells().get(team2.getCells().size-1);
                             cell.setActor(player1).expand().fill();
                             selectedTeam = team2;
+                            player1Team = 1;
                         }
                     }
 
@@ -259,9 +293,9 @@ public class SelectionScreen extends ScreenAdapter {
     }
     private static class PlayerInputProcessorCpu implements InputProcessor {
         private final int leftKey, rightKey;
-        private Table team1, team2, playerTable;
-        private Table selectedTeam = null;
+        private Table team1, team2;
         private final Table player1,player2;
+        private int pl = 1;
 
         public PlayerInputProcessorCpu(Table player,Table player2, int leftKey, int rightKey, Table team1, Table team2, Table playerTable) {
             this.player1 = player;
@@ -270,9 +304,10 @@ public class SelectionScreen extends ScreenAdapter {
             this.rightKey = rightKey;
             this.team1 = team1;
             this.team2 = team2;
-            this.playerTable = playerTable;
         }
-
+        public int getPl(){
+            return pl;
+        }
         @Override
         public boolean keyDown(int keycode) {
             if (keycode == leftKey) {
@@ -281,14 +316,17 @@ public class SelectionScreen extends ScreenAdapter {
                 cell.setActor(player2);
                 Cell cell2 = team2.getCells().get(team2.getCells().size - 1);
                 cell2.setActor(player1);
+                pl = 2;
             }
 
             if (keycode == rightKey) {
                 // Move player to Team 2
                 Cell cell = team1.getCells().get(team1.getCells().size - 1);
+
                 cell.setActor(player1);
                 Cell cell2 = team2.getCells().get(team2.getCells().size - 1);
                 cell2.setActor(player2);
+                pl = 1;
             }
             return false;
         }
@@ -313,14 +351,22 @@ public class SelectionScreen extends ScreenAdapter {
     }
 
     private Table createTeamBox(Team team,Table player1) {
-        Table teamTable = new Table();
-        teamTable.debug(); // Enables debugging to visualize the layout.
+        Pixmap pixmap1 = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap1.setColor(Color.valueOf("3E5879" )); // Set color #3A3960
+        pixmap1.fill();
 
+// Create a Texture from the Pixmap
+        Texture texture = new Texture(pixmap1);
+
+// Create a Drawable from the Texture
+        Drawable colorBackground = new TextureRegionDrawable(texture);
+        Table teamTable = new Table();
+    teamTable.setBackground(colorBackground);
         // Create a sub-table for the team name with a black background.
-        Table nameTable = new Table().debugTable();
-        //teamTable.setBackground(new TextureRegionDrawable());
+        Table nameTable = new Table();
+        //teamTable.setBackground(new TextureRegonDrawable());
         Label teamLabel = new Label(team.getName(), skin);
-        teamLabel.setColor(Color.BLACK);
+        //teamLabel.setColor(Color.BLACK);
 
         nameTable.add(teamLabel).center().expandX().pad(0);
 
@@ -328,32 +374,18 @@ public class SelectionScreen extends ScreenAdapter {
         Table photoTable = new Table();
         photoTable.setBackground(new TextureRegionDrawable(team.getTextureRegion())); // Team photo as background.
 
-       /* Actor placeholder = new Actor();
-
-        placeholder.setName("placeholder1");
-
-        photoTable.add(placeholder).expand().fill().row();*/
-
         Actor placeholder1 = new Actor();
         placeholder1.setName("placeholder");
         placeholder1.setSize(player1.getWidth(), player1.getHeight());
 
-        //photoTable.add(placeholder1).expand().fill().row();
-        // Add the sub-tables to the main teamTable.
         teamTable.add(nameTable).padBottom(5); // Team name section with fixed height.
         teamTable.row();
         teamTable.add(photoTable).growX().maxWidth(130).maxHeight(130).expandY().fillY().row(); // Team photo section fills the remaining space.
-        //teamTable.add(placeholder1).size(player1.getWidth(), player1.getHeight()).expand().fill().row();
 
         teamTable.add(placeholder1).minSize(70).expand().fillX().row();
         return teamTable;
     }
-    private Pixmap createBlackPixmap() {
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(0, 0, 0, 1); // Black color with full opacity.
-        pixmap.fill();
-        return pixmap;
-    }
+
 
 
 
@@ -364,11 +396,6 @@ public class SelectionScreen extends ScreenAdapter {
         // Player Icon
         Image playerIcon = new Image(gameplayAtlas.findRegion(textureRegion));
         playerTable.add(playerIcon).size(60, 60).row(); // Adjust size as needed
-
-        // Player Name Label
-        /*Label playerLabel = new Label(playerName, skin);
-        playerLabel.setAlignment(Align.center);
-        playerTable.add(playerLabel).padTop(5);*/
 
         return playerTable;
     }

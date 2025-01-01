@@ -6,6 +6,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.utils.Logger;
 
 import java.util.LinkedHashMap;
@@ -35,13 +36,17 @@ public class SoccerGame extends Game {
         assetManager.load(AssetDescriptors.FONT);
         assetManager.load(AssetDescriptors.FONT1);
         assetManager.load(AssetDescriptors.FONT2);
+        assetManager.load(AssetDescriptors.GAMEOVER);
+
         assetManager.finishLoading();
 
         assetManager.getLogger().setLevel(Logger.ERROR);
-
+        TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
         batch = new SpriteBatch();
-
-        setScreen(new SelectionScreen(this,new Team("Maribor",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.MARIBOR)),new Team("Olimpija",assetManager.get(AssetDescriptors.GAMEPLAY).findRegion(RegionNames.Textures.OLIMPIJA)),Mode.LOCALMULTIPLAYER));
+        String t1 = "Maribor";
+        String t2 = "Olimpija";
+        System.out.println(t1.toLowerCase() + ".p");
+        setScreen(new SelectionScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.LOCALMULTIPLAYER));
 
 
     }

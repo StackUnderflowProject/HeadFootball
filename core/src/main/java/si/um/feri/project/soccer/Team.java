@@ -7,10 +7,17 @@ public class Team {
     private String name;
     private TextureRegion textureRegion;
 
+    public TextureRegion getPlayer() {
+        return player;
+    }
+
+    private TextureRegion player;
+
     // Constructor
-    public Team(String name, TextureRegion textureRegion) {
+    public Team(String name, TextureRegion textureRegion,TextureRegion p) {
         this.name = name;
         this.textureRegion = textureRegion;
+        this.player = p;
     }
 
     // Getter for name
