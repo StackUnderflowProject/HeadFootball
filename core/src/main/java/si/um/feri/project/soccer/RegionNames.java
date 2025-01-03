@@ -26,8 +26,9 @@ public class RegionNames {
         public static final String HEAD8 = "head8";
         public static final String SHOE8 = "shoe8";
 
-        public static final String BALL = "ball";
+        public static final String BOUNCYBALL = "bouncyball";
         public static final String BALL1 = "ball1";
+        public static final String DULL = "dull";
 
         public static final String D1 = "1";
         public static final String D2 = "2";

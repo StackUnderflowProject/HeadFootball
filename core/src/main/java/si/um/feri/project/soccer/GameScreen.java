@@ -1,5 +1,6 @@
 package si.um.feri.project.soccer;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
@@ -7,6 +8,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -14,6 +16,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
@@ -49,7 +52,6 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class GameScreen extends ScreenAdapter {
-    private static final float BALL_SPEED = 40f;
     private final SoccerGame game;
     private final AssetManager assetManager;
     private Viewport viewport;
@@ -61,18 +63,15 @@ public class GameScreen extends ScreenAdapter {
     private Skin skin;
     private TextureAtlas gameplayAtlas;
     private Array<GameObject> gameObjects;
-    private Integer player1;
-    private Integer player2;
-    private Body goal1;
     private int elapsedTime;
     private Float accumulator;
-    private Boolean gameStarted;
-    private Ball ball;
+
+
     private Goal Goal1;
     private Goal Goal2;
     private Player Player1;
     private Player Player2;
-    private boolean kickOff;
+    private GameState state;
     private int kickOffTime = 3;
     private Array<Label> kickOffImage;
     private Label timeLabel;
@@ -80,22 +79,29 @@ public class GameScreen extends ScreenAdapter {
     private Mode mode;
     private Label score1;
     private Label score2;
-
+    private Team team1;
+    private  Team team2;
+    private SpriteBatch batch;
+    private FPSLogger fpsLogger;
 
 
     public GameScreen(SoccerGame game,Team team1,Team team2,Mode mode) {
 
         this.game = game;
         this.mode = mode;
-        gameStarted = true;
+        this.batch = game.getBatch();
         accumulator = 0f;
-        elapsedTime = 300;
+        elapsedTime = 1000;
         assetManager = game.getAssetManager();
+
         world = new World(new Vector2(0, -15), true);
         gameplayAtlas = assetManager.get(AssetDescriptors.GAMEPLAY);
-        kickOff = true;
+        fpsLogger = new FPSLogger();
         kickOffImage = new Array<>();
+        state = GameState.KICKOFF;
         gameObjects = new Array<>();
+        this.team2 = team2;
+        this.team1 = team1;
         viewport = new FitViewport(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
         stage = new Stage(viewport, game.getBatch());
         UIviewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
@@ -103,6 +109,7 @@ public class GameScreen extends ScreenAdapter {
         Table rootTable = new Table();
         rootTable.setFillParent(true); // Make the table fill the stage
 
+        BallsManager.initialize(gameplayAtlas,new Vector2(viewport.getWorldWidth() / 2f,viewport.getWorldHeight() / 2f),world);
 // Create a label style
         BitmapFont font = new BitmapFont(); // Use default font
         // Create the static "Time" label
@@ -230,47 +237,20 @@ public class GameScreen extends ScreenAdapter {
 
         background.setSize(viewport.getWorldWidth(), viewport.getWorldHeight());
         stage.addActor(background);
-        ball = new Ball(gameplayAtlas.findRegion(RegionNames.Textures.BALL1),1.5f,new Vector2(viewport.getWorldWidth()/2,viewport.getWorldHeight()/2),world);
+
         BodyDef bodyDef = new BodyDef();
 // We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
         bodyDef.type = BodyDef.BodyType.DynamicBody;
 // Set our body's starting position in the world
 
         bodyDef.position.set(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2);
-        bodyDef.linearVelocity.y = -10;
+        bodyDef.linearVelocity.y = 0;
         bodyDef.linearVelocity.x = 0f;
 
-// Create our body in the world using our body definition
-        //Body body = world.createBody(bodyDef);
-        //body.setBullet(true);
-// Create a circle shape and set its radius to 6
-        CircleShape circle = new CircleShape();
-        circle.setRadius(1.5f);
-        Sprite sprite = new Sprite(gameplayAtlas.findRegion(RegionNames.Textures.BALL));
-        sprite.setPosition(bodyDef.position.x,bodyDef.position.y);
-        sprite.setSize(3,3);
-        sprite.setOrigin(sprite.getWidth() / 2f,sprite.getHeight()/2f);
-// Create a fixture definition to apply our shape to
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = circle;
-        fixtureDef.density = 1.0f;
-        fixtureDef.friction = 0.8f;  // No friction
-        fixtureDef.restitution = 0.3f; // Make it bounce a little bit
-        //body.createFixture(fixtureDef);
-        ////body.setUserData("ball");
-        //gameObjects.add(new GameObject(sprite,body));*/
-
-        /*Body body2 = physicsBodies.createBody("goal", world, 0.1f, 0.1f);
-        body2.setUserData("david");
-
-
-        body2.setTransform(new Vector2(0f, 10f), 0); // Set the goal's position in the world
-           */
         TextureRegion goalTexture =gameplayAtlas.findRegion("goal");
         Goal1 = new Goal(goalTexture,6,10,new Vector2(0,4),world,ID.GOAL1);
         goalTexture.flip(true,false);
      Goal2 = new Goal(goalTexture,6,10,new Vector2(viewport.getWorldWidth() - 6,4),world,ID.GOal2);
-     System.out.println("Team1: " + team1.getName() + " Team2: " + team2.getName());
         Player1 = new Player(team1.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.GOal2,Input.Keys.A,Input.Keys.D,Input.Keys.W);
         Player2 = new Player(team2.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.GOAL1,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
        // Gdx.input.setInputProcessor(new InputMultiplexer(Player1.getProcesor(),Player2.getProcesor()));
@@ -291,7 +271,6 @@ public class GameScreen extends ScreenAdapter {
         gameObjects.add(new GameObject(goal2sprite,goal2));*/
         world.setContactListener(new MyContactListener());
         createBounds(world);
-        bodyDef.linearVelocity.x = -20f;
     }
     public Pixmap extractPixmapFromTextureRegion(TextureRegion textureRegion) {
         TextureData textureData = textureRegion.getTexture().getTextureData();
@@ -395,11 +374,15 @@ public class GameScreen extends ScreenAdapter {
                     }
                     score1.setText(Player1.getScore());
                     score2.setText(Player2.getScore());
-                    kickOff = true;
+                    state = GameState.KICKOFF;
                     kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
+                    BallsManager.toggleBall(BallType.BOUNCY);
+                    BallsManager.reset = true;
                     break;
                 default :
+                    BallsManager.toggleBall(BallType.DULL);
+
                     //System.out.println("Unhandled collision: " + col);
 
             }
@@ -426,11 +409,6 @@ public class GameScreen extends ScreenAdapter {
             // Can be used for post-solve logic (optional)
         }
 
-        private void handleGoal(String id) {
-            // Trigger goal handling, such as resetting the ball and updating the score
-            System.out.println("Goal Scored! Player: " + id);
-            // Reset the ball position or other actions as needed
-        }
     }
 
 
@@ -488,7 +466,7 @@ public class GameScreen extends ScreenAdapter {
         FixtureDef ceilFixtureDef = new FixtureDef();
         ceilFixtureDef.shape = groundShape;
         ceilFixtureDef.filter.maskBits = Bits.BALL_BIT | Bits.PLAYER_BIT;
-
+        ceilFixtureDef.filter.categoryBits = Bits.GROUND_BIT;
         ceilFixtureDef.friction = 0.0f;
         ceilBody.createFixture(ceilFixtureDef);
 
@@ -526,77 +504,36 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
+        System.out.println(Gdx.graphics.getFramesPerSecond());
         ScreenUtils.clear(0f, 0f, 0f, 0f);
 
+        stage.act(delta);
         stage.draw();
 
-        stage.act(delta);
-
-
-        if(gameStarted){
-            // Update the camera and apply to the stage
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-                for (GameObject gameObject : gameObjects) {
-                    if ("ball".equals(gameObject.body.getUserData())) {
-                        Vector2 impulse = new Vector2(-5f, 0); // Small impulse to the left
-                        Vector2 point = gameObject.body.getWorldCenter(); // Apply at the center of the body
-                        gameObject.body.applyLinearImpulse(impulse, point, true); // Apply the impulse
-                    }
-                }
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-                for (GameObject gameObject : gameObjects) {
-                    if ("ball".equals(gameObject.body.getUserData())) {
-                        Vector2 impulse = new Vector2(5f, 0); // Small impulse to the left
-                        Vector2 point = gameObject.body.getWorldCenter(); // Apply at the center of the body
-                        gameObject.body.applyLinearImpulse(impulse, point, true); // Apply the impulse
-                    }
-                }
-            }
-
-
-           for(GameObject gameObject : gameObjects) {
-                if ("ball".equals(gameObject.body.getUserData())) {
-                    Vector2 bodyPosition = gameObject.body.getPosition();
-
-
-                    // Update the sprite's position to match the body's position
-                    gameObject.sprite.setPosition(bodyPosition.x - gameObject.sprite.getWidth() / 2,
-                        bodyPosition.y - gameObject.sprite.getHeight() / 2);
-                    gameObject.sprite.setRotation(gameObject.body.getAngle() * MathUtils.radiansToDegrees);
-                }
-            }
-            game.getBatch().begin();
-           ball.draw(game.getBatch());
-           Goal1.draw(game.getBatch());
-            Goal2.draw(game.getBatch());
-            Player1.draw(game.getBatch());
-            Player2.draw(game.getBatch());
-            for(GameObject obj : gameObjects){
-                obj.render(game.getBatch());
-            }
-            game.getBatch().end();
-
-            OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-            camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
-            camera.update();
-
-            //renderer.render(world,viewport.getCamera().combined);
-        }
+        batch.begin();
+        Player1.draw(batch);
+        Player2.draw(batch);
+        Goal1.draw(batch);
+        Goal2.draw(batch);
+        BallsManager.draw(batch);
+        batch.end();
         update(delta);
+        renderer.render(world,viewport.getCamera().combined);
+        UIstage.act(delta);
         UIstage.draw();
-        UIstage.act();
     }
 
     public void update(float delta){
+        if(elapsedTime == 0) {state = GameState.OVERTIME;timeValueLabel.setText("OVER TIME");};
+        if(state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())game.setScreen(new GameOverScreen(game,team1,team2,Player1,Player2));
         accumulator += delta;
 
         if (accumulator >= 1) {
             accumulator = 0f; // Reset the accumulator after each second
 
-            if (!kickOff) {
+            if (state != GameState.KICKOFF && !(elapsedTime == 0)) {
                 elapsedTime--;
-
+                elapsedTime = Math.max(0,elapsedTime);
                 // Update the displayed time
                 timeValueLabel.setText(String.valueOf(elapsedTime));
             } else {
@@ -611,20 +548,23 @@ public class GameScreen extends ScreenAdapter {
                 }
 
                 if (kickOffTime == -1) {
-                    kickOff = false; // End the kickoflif phase
+                    state = GameState.STARTED; // End the kickoflif phase
                     //System.out.println(Player1.getScore() + " vs " + Player2.getScore());
                     kickOffImage.get(0).setVisible(false); // Hide the last kickoff image
                 }
             }
         }
 
-        if(gameStarted && !kickOff){
+        if(state != GameState.KICKOFF){
             world.step(delta,6,6);
 
-            if(ball.markReset){
-                ball.resetBall();
-                ball.markReset = false;
+            BallsManager.update();
+            BallsManager.moveInactive();
+            if(BallsManager.reset){
+                BallsManager.resetBalls();
             }
+            BallsManager.activate();
+
             if(Player1.markReset){
                 Player1.resetPlayer();
                 Player1.markReset = false;
@@ -634,21 +574,31 @@ public class GameScreen extends ScreenAdapter {
                 Player2.resetPlayer();
                 Player2.markReset = false;
             }
-            ball.update();
             Player1.handleInput(delta);
             Player1.update(delta);
             if(mode == Mode.LOCALMULTIPLAYER)Player2.handleInput(delta);
-
+            else {
+                Player2.handleAiMovement(delta,BallsManager.getCurrentBallPosition());
+            }
             Player2.update(delta);
         }
     }
     @Override
     public void hide() {
+
         dispose();
     }
 
     @Override
     public void dispose() {
         stage.dispose();
+        UIstage.dispose();
+        Array<Body> bodies = new Array<>();
+        world.getBodies(bodies);
+        for (Body body : bodies) {
+            world.destroyBody(body);
+        }
+        world.dispose();
+        world.dispose();
     }
 }

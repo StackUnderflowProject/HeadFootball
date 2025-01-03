@@ -39,6 +39,14 @@ public class Goal extends Sprite {
         body.createFixture(edgeShape, 0);
 
   edgeShape.set(pos.x, pos.y + height, pos.x + width, pos.y + height);
+  if(ID.GOal2 == id){
+      edgeShape.set(pos.x, pos.y + height, pos.x + width, pos.y + height + 2);
+
+  }
+  else{
+      edgeShape.set(pos.x, pos.y + height + 2, pos.x + width, pos.y + height);
+
+  }
   FixtureDef topFix = new FixtureDef();
   topFix.shape = edgeShape;
   topFix.filter.categoryBits = Bits.GROUND_BIT;  // Make sure top edge is categorized differently if needed

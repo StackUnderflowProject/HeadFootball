@@ -6,260 +6,281 @@ filter: Nearest, Nearest
 repeat: none
 1
   rotate: false
-  xy: 4059, 1985
+  xy: 4068, 1990
   size: 24, 42
   orig: 24, 42
   offset: 0, 0
   index: -1
 2
   rotate: false
-  xy: 104, 10
+  xy: 806, 497
   size: 24, 42
   orig: 24, 42
   offset: 0, 0
   index: -1
 3
   rotate: false
-  xy: 398, 70
+  xy: 1910, 810
   size: 24, 42
   orig: 24, 42
   offset: 0, 0
   index: -1
 ball
   rotate: false
-  xy: 3226, 1238
+  xy: 784, 339
   size: 20, 20
   orig: 20, 20
   offset: 0, 0
   index: -1
 ball1
   rotate: false
-  xy: 2408, 961
+  xy: 3132, 986
   size: 40, 40
   orig: 40, 40
   offset: 0, 0
   index: -1
+bouncyball
+  rotate: false
+  xy: 1002, 657
+  size: 20, 20
+  orig: 20, 20
+  offset: 0, 0
+  index: -1
 bravop
   rotate: false
-  xy: 1672, 849
+  xy: 1910, 854
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 celjep
   rotate: false
-  xy: 3030, 1122
+  xy: 3984, 1816
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 cpu
   rotate: false
-  xy: 3030, 1226
+  xy: 806, 645
   size: 194, 259
   orig: 194, 259
   offset: 0, 0
   index: -1
 domžalep
   rotate: false
-  xy: 3132, 1174
+  xy: 908, 593
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
+dull
+  rotate: false
+  xy: 3484, 1176
+  size: 20, 20
+  orig: 20, 20
+  offset: 0, 0
+  index: -1
 field
   rotate: false
-  xy: 2, 356
+  xy: 2, 361
   size: 802, 543
   orig: 802, 543
   offset: 0, 0
   index: -1
 goal
   rotate: false
-  xy: 1588, 735
+  xy: 3984, 1868
   size: 82, 164
   orig: 82, 164
   offset: 0, 0
   index: -1
 goalText
   rotate: false
-  xy: 2, 114
+  xy: 3182, 1250
   size: 800, 240
   orig: 800, 240
   offset: 0, 0
   index: -1
 icon
   rotate: false
-  xy: 2004, 1003
+  xy: 2004, 2
   size: 1024, 1024
   orig: 1024, 1024
   offset: 0, 0
   index: -1
 kickoffText
   rotate: false
-  xy: 806, 724
+  xy: 2, 184
   size: 780, 175
   orig: 780, 175
   offset: 0, 0
   index: -1
 koperp
   rotate: false
-  xy: 806, 393
+  xy: 3182, 1069
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 maribor
   rotate: false
-  xy: 3832, 1802
+  xy: 1002, 679
   size: 225, 225
   orig: 225, 225
   offset: 0, 0
   index: -1
 mariborp
   rotate: false
-  xy: 908, 445
+  xy: 3284, 1121
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 murap
   rotate: false
-  xy: 1033, 620
+  xy: 3586, 1198
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 nafta 1903p
   rotate: false
-  xy: 1135, 672
+  xy: 2, 20
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 olimpija
   rotate: false
-  xy: 806, 497
+  xy: 1229, 679
   size: 225, 225
   orig: 225, 225
   offset: 0, 0
   index: -1
 olimpijap
   rotate: false
-  xy: 3453, 1383
+  xy: 104, 72
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 p1
   rotate: false
-  xy: 3226, 1260
+  xy: 1456, 679
   size: 225, 225
   orig: 225, 225
   offset: 0, 0
   index: -1
 p2
   rotate: false
-  xy: 3832, 1575
+  xy: 1683, 679
   size: 225, 225
   orig: 225, 225
   offset: 0, 0
   index: -1
 primorjep
   rotate: false
-  xy: 3555, 1435
+  xy: 398, 132
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 radomljep
   rotate: false
-  xy: 3934, 1523
+  xy: 3030, 872
   size: 51, 50
   orig: 51, 50
   offset: 0, 0
   index: -1
 scoreboard
   rotate: false
-  xy: 2004, 926
+  xy: 3182, 1173
   size: 300, 75
   orig: 300, 75
   offset: 0, 0
   index: -1
 selectText
   rotate: false
-  xy: 2, 54
+  xy: 2, 124
   size: 292, 58
   orig: 292, 58
   offset: 0, 0
   index: -1
 shoe1
   rotate: false
-  xy: 3030, 1174
+  xy: 3030, 976
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe2
   rotate: false
-  xy: 806, 445
+  xy: 806, 593
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe3
   rotate: false
-  xy: 1033, 672
+  xy: 3182, 1121
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe4
   rotate: false
-  xy: 3453, 1435
+  xy: 3484, 1198
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe5
   rotate: false
-  xy: 3832, 1523
+  xy: 2, 72
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe6
   rotate: false
-  xy: 2306, 951
+  xy: 296, 132
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe7
   rotate: false
-  xy: 2, 2
+  xy: 3030, 924
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 shoe8
   rotate: false
-  xy: 296, 62
+  xy: 806, 541
   size: 100, 50
   orig: 100, 50
   offset: 0, 0
   index: -1
 stadium
   rotate: false
-  xy: 2, 901
+  xy: 2, 906
   size: 2000, 1126
   orig: 2000, 1126
   offset: 0, 0
   index: -1
 t
   rotate: false
-  xy: 3030, 1487
+  xy: 3182, 1492
   size: 800, 540
   orig: 800, 540
+  offset: 0, 0
+  index: -1
+vs
+  rotate: false
+  xy: 2004, 1028
+  size: 1176, 1004
+  orig: 1176, 1004
   offset: 0, 0
   index: -1
