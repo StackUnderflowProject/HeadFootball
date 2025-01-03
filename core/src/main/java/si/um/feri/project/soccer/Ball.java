@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Transform;
 import com.badlogic.gdx.physics.box2d.World;
 
 public class Ball extends Sprite {
@@ -16,13 +17,17 @@ public class Ball extends Sprite {
     private TextureRegion texture;
     private Body body;
     private Vector2 resetState;
+    public boolean active = false;
     public Boolean markReset = false;
-    public Ball(TextureRegion region, Float size, Vector2 pos, World world) {
+    public Ball(TextureRegion region, Float size, Vector2 pos, World world,float restitution) {
         setRegion(region);
         resetState = pos;
-        defineBall(pos,world,size);
+        defineBall(pos,world,size,restitution);
         Vector2 position = body.getPosition();
         setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
+    }
+    public Body getBody(){
+        return body;
     }
     public void resetBall(){
         body.setTransform(resetState.x, resetState.y, 0);
@@ -37,7 +42,7 @@ public class Ball extends Sprite {
         // Reset rotation
         setRotation(0);
     }
-    private void defineBall(Vector2 pos,World world,Float size){
+    private void defineBall(Vector2 pos,World world,Float size,float restitution){
         BodyDef bodyDef = new BodyDef();
 // We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
         bodyDef.type = BodyDef.BodyType.DynamicBody;
@@ -64,18 +69,25 @@ public class Ball extends Sprite {
         fixtureDef.friction = 0.5f;
         body.setLinearDamping(0.4f);  // Apply linear damping to slow down the ball over time
 
-        fixtureDef.restitution = 0.3f; // Make it bounce a little bit
+        fixtureDef.restitution = restitution; // Make it bounce a little bit
         body.createFixture(fixtureDef);
         body.setUserData(this);
     }
+    public void setActive(boolean active){
+        this.active = active;
+    }
+    public void updateState(){
+        body.setActive(active);
 
+    }
+    public void setTrans(Transform transform){
+        body.setTransform(transform.getPosition(),transform.getRotation());
+    }
     public void update() {
-
         Vector2 position = body.getPosition();
         setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
         setRotation((float) Math.toDegrees(body.getAngle()));
     }
-
 
     public void draw(SpriteBatch batch) {
         super.draw(batch);

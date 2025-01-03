@@ -53,7 +53,7 @@ public class Player extends Sprite {
         setPosition(pos.x, pos.y + height /2);
         createHead(world, width, height, pos);  // Create the head body
         Vector2 position = headBody.getPosition();
-        setPosition(position.x - width / 2 , position.y - height / 2);
+        setPosition(position.x - width / 2 , position.y - height / 2 );
         this.resetState = pos;
         this.leftKey = leftKey;
         this.rightKey = rightKey;
@@ -71,8 +71,18 @@ public class Player extends Sprite {
         headBody.setLinearDamping(0.8f);
 // Create a rectangular shape for the head
         PolygonShape headShape = new PolygonShape();
-        headShape.setAsBox((width- 1)/ 2, (height-1) / 2);  // Set half-width and height for the rectangle
+        /*float radius = Math.min(width, height) / 2f; // Adjust based on the desired size
 
+        float[] vertices = new float[12]; // 6 vertices (x, y) => 12 floats
+        for (int i = 0; i < 6; i++) {
+            float angle = (float) (Math.PI / 3 * i); // 60 degrees for each vertex
+            vertices[i * 2] = radius * (float) Math.cos(angle); // x-coordinate
+            vertices[i * 2 + 1] = radius * (float) Math.sin(angle); // y-coordinate
+        }*/
+
+// Set the vertices in the shape
+        //headShape.set(vertices);
+        headShape.setAsBox((width- 1)/ 2, (height-1) / 2);  // Set half-width and height for the rectangle
         FixtureDef headFixture = new FixtureDef();
         headFixture.shape = headShape;
         headFixture.density = 1f;
@@ -112,6 +122,56 @@ public class Player extends Sprite {
             grounded = false;
         }
     }
+    public void handleAiMovement(float deltaTime, Vector2 targetPosition) {
+        // Define maximum speed and impulse values for AI
+        final float MAX_SPEED = 5f;
+        final float MOVE_IMPULSE = 20f;
+        final float JUMP_IMPULSE = 200f;
+        final float desiredDistance = 10f;
+        // Get the AI's position
+        Vector2 aiPosition = headBody.getPosition();
+
+        // Calculate the distance between AI and the target
+        float distanceToTarget = aiPosition.dst(targetPosition);
+
+        // Check if the AI needs to move closer or farther
+        if (distanceToTarget > desiredDistance) {
+            // Move closer to the target
+            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED) {
+                // Move left
+                headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
+            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED) {
+                // Move right
+                headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
+            }
+        } else if (distanceToTarget < desiredDistance * 0.8f) {
+            // Move farther away from the target (adds a buffer zone to prevent oscillation)
+            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED) {
+                // Move right (away from target)
+                headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
+            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED) {
+                // Move left (away from target)
+                headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
+            }
+        }
+
+        // Optional: Add jumping logic for obstacles or variety
+        if (shouldJump() && grounded) {
+            headBody.applyLinearImpulse(new Vector2(0, JUMP_IMPULSE), headBody.getWorldCenter(), true);
+            grounded = false;
+        }
+    }
+
+    // Simple condition to decide if the AI should jump
+    private boolean shouldJump() {
+        // Example: Jump with a 10% chance per frame, or add your custom condition
+        return Math.random() < 0.1;
+    }
+
+
+
+
+
 
     public void draw(SpriteBatch batch) {
         super.draw(batch);  // Draw the player sprite
