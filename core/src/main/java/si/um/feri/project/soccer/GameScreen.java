@@ -1,30 +1,21 @@
 package si.um.feri.project.soccer;
 
-import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.FPSLogger;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
@@ -32,7 +23,6 @@ import com.badlogic.gdx.physics.box2d.EdgeShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -41,10 +31,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -54,6 +42,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 public class GameScreen extends ScreenAdapter {
     private final SoccerGame game;
     private final AssetManager assetManager;
+    private final Array<PowerUp> powerUp;
     private Viewport viewport;
     private Stage stage;
     private Viewport UIviewport;
@@ -110,6 +99,7 @@ public class GameScreen extends ScreenAdapter {
         rootTable.setFillParent(true); // Make the table fill the stage
 
         BallsManager.initialize(gameplayAtlas,new Vector2(viewport.getWorldWidth() / 2f,viewport.getWorldHeight() / 2f),world);
+        GoalManager.initialize(gameplayAtlas,world,viewport.getWorldWidth());
 // Create a label style
         BitmapFont font = new BitmapFont(); // Use default font
         // Create the static "Time" label
@@ -247,12 +237,8 @@ public class GameScreen extends ScreenAdapter {
         bodyDef.linearVelocity.y = 0;
         bodyDef.linearVelocity.x = 0f;
 
-        TextureRegion goalTexture =gameplayAtlas.findRegion("goal");
-        Goal1 = new Goal(goalTexture,6,10,new Vector2(0,4),world,ID.GOAL1);
-        goalTexture.flip(true,false);
-     Goal2 = new Goal(goalTexture,6,10,new Vector2(viewport.getWorldWidth() - 6,4),world,ID.GOal2);
-        Player1 = new Player(team1.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.GOal2,Input.Keys.A,Input.Keys.D,Input.Keys.W);
-        Player2 = new Player(team2.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.GOAL1,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
+        Player1 = new Player(team1.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.RIGHT,Input.Keys.A,Input.Keys.D,Input.Keys.W);
+        Player2 = new Player(team2.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.LEFT,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
        // Gdx.input.setInputProcessor(new InputMultiplexer(Player1.getProcesor(),Player2.getProcesor()));
         /* goal1 = createGoal(world, 0, 4f, 6, 10f, true);
         Sprite goal1Sprite = new Sprite(gameplayAtlas.findRegion("goal"));
@@ -269,6 +255,8 @@ public class GameScreen extends ScreenAdapter {
 
         goal2sprite.setFlip(true,false);
         gameObjects.add(new GameObject(goal2sprite,goal2));*/
+        powerUp = new Array<>();
+        powerUp.add(new GoalPowerUp(PowerUpType.GOOD,PowerUpEffectType.GOALBIG,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
         world.setContactListener(new MyContactListener());
         createBounds(world);
     }
@@ -339,49 +327,62 @@ public class GameScreen extends ScreenAdapter {
             Object userDataA = fixtureA.getBody().getUserData();
             Object userDataB = fixtureB.getBody().getUserData();
             int col = fixtureB.getFilterData().categoryBits | fixtureA.getFilterData().categoryBits;
+            System.out.println("HIt" + col);
             switch (col){
-                case Bits.GROUND_BIT | Bits.BALL_BIT :
-                    //System.out.println("Ground Ball");
+                case Bits.BALL_BIT | Bits.POWERUP_BIT:
+                {
+                    System.out.println("HIt");
+                    PowerUp pu = userDataB instanceof PowerUp ? ((PowerUp) userDataB) : ((PowerUp) userDataA);
+                    pu.activate();
+                    pu.setToDestroy(true);
                     break;
+                }
+                case Bits.GROUND_BIT | Bits.BALL_BIT :
+                {
+                    break;
+                }
                 case Bits.PLAYER_BIT | Bits.GROUND_BIT:
-
+                {
                     Player player = userDataB instanceof Player ? ((Player) userDataB) : ((Player) userDataA);
                     player.grounded = true;
                     break;
-                case Bits.GOALSENSOR_BIT | Bits.BALL_BIT :
-                    //System.out.println("Sensor Ball");
-                    if (userDataA instanceof Goal) {
-                        Goal goalSprite = (Goal) userDataA;
-                        Ball ballSprite = (Ball) userDataB;
-                        if(goalSprite.id == ID.GOAL1) {
-                            Player2.incScore();
+                }
+                case Bits.GOALSENSOR_BIT | Bits.BALL_BIT :{
+                    Goal goalSprite = userDataB instanceof Goal ? ((Goal) userDataB) : ((Goal) userDataA);
+                    Ball ballSprite = userDataB instanceof Ball ? ((Ball) userDataB) : ((Ball) userDataA);
 
-                        }
-                        else{
-                            Player1.incScore();
-                        }
-                        ballSprite.markReset = true;
-                        Player1.markReset = true;
-                        Player2.markReset = true;
-                        //System.out.println("Collision with Goal: " + (goalSprite.id == ID.GOAL1 ? 1 : 2));
-                    } else if (userDataB instanceof Goal){
-                        Goal goalSprite = (Goal) userDataB;
-                        Ball ballSprite = (Ball) userDataA;
-                        ballSprite.markReset = true;
-                        Player1.markReset = true;
-                        Player2.markReset = true;
-                        //System.out.println("Collision with Goal: " + (goalSprite.id == ID.GOAL1 ? 1 : 2));
+                    System.out.println("Sensor Ball");
+
+                    if(goalSprite.id == ID.LEFT) {
+                        Player2.incScore();
+
                     }
+                    else{
+                        Player1.incScore();
+                    }
+                    ballSprite.markReset = true;
+                    Player1.markReset = true;
+                    Player2.markReset = true;
                     score1.setText(Player1.getScore());
                     score2.setText(Player2.getScore());
                     state = GameState.KICKOFF;
                     kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
+
                     BallsManager.toggleBall(BallType.BOUNCY);
+                    //GoalManager.toggleGoal(GoalType.BIG);
                     BallsManager.reset = true;
                     break;
+                }
+
+                case Bits.PLAYER_BIT | Bits.BALL_BIT:
+                {
+                    Player player = userDataB instanceof Player ? ((Player) userDataB) : ((Player) userDataA);
+                    BallsManager.lastTouched = player.id;
+                    break;
+                }
                 default :
-                    BallsManager.toggleBall(BallType.DULL);
+                    //BallsManager.toggleBall(BallType.DULL);
 
                     //System.out.println("Unhandled collision: " + col);
 
@@ -504,7 +505,7 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-        System.out.println(Gdx.graphics.getFramesPerSecond());
+        //System.out.println(Gdx.graphics.getFramesPerSecond());
         ScreenUtils.clear(0f, 0f, 0f, 0f);
 
         stage.act(delta);
@@ -513,8 +514,12 @@ public class GameScreen extends ScreenAdapter {
         batch.begin();
         Player1.draw(batch);
         Player2.draw(batch);
-        Goal1.draw(batch);
-        Goal2.draw(batch);
+        for(PowerUp p : powerUp)
+            p.draw(batch);
+        //Goal1.draw(batch);
+        //Goal2.draw(batch);
+        GoalManager.draw(batch);
+
         BallsManager.draw(batch);
         batch.end();
         update(delta);
@@ -557,22 +562,19 @@ public class GameScreen extends ScreenAdapter {
 
         if(state != GameState.KICKOFF){
             world.step(delta,6,6);
-
+            GoalManager.update();
             BallsManager.update();
-            BallsManager.moveInactive();
-            if(BallsManager.reset){
-                BallsManager.resetBalls();
+            for (PowerUp p : powerUp) {
+                p.update(delta);
+                if (p.isDestroyed()) {
+                    //powerUp.removeValue(p,true);
+                }
             }
-            BallsManager.activate();
-
             if(Player1.markReset){
                 Player1.resetPlayer();
-                Player1.markReset = false;
-                //System.out.println("Reset");
             }
             if(Player2.markReset){
                 Player2.resetPlayer();
-                Player2.markReset = false;
             }
             Player1.handleInput(delta);
             Player1.update(delta);
@@ -598,7 +600,6 @@ public class GameScreen extends ScreenAdapter {
         for (Body body : bodies) {
             world.destroyBody(body);
         }
-        world.dispose();
         world.dispose();
     }
 }

@@ -29,6 +29,14 @@ public class RegionNames {
         public static final String BOUNCYBALL = "bouncyball";
         public static final String BALL1 = "ball1";
         public static final String DULL = "dull";
+        public static final String SMALL = "small";
+        public static final String NORMAL = "normal";
+        public static final String BIG = "big";
+        public static final String POWERUPNEUTRAL = "neutral";
+        public static final String POWERUPBAD = "bad";
+        public static final String POWERUPGOOD = "good";
+        public static final String ICE = "ice";
+
 
         public static final String D1 = "1";
         public static final String D2 = "2";
