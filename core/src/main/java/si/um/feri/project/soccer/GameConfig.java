@@ -10,6 +10,9 @@ public class GameConfig {
 
     public static final float WORLD_WIDTH = 64f;    // world units
     public static final float WORLD_HEIGHT = 36f;   // world units
+    public static final float GOALWIDTH = 6f;
+    public static final float GOALHEIGHT = 10f;
+    public static final float GROUNDLEVEL = 4f;
 
     private GameConfig() {
     }

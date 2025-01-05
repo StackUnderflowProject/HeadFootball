@@ -11,7 +11,7 @@ public  class BallsManager {
     private static Array<Ball> balls;
     static private int ballActive;
     static public boolean reset = false;
-
+    static public ID lastTouched = ID.LEFT;
     static public void initialize(TextureAtlas atlas, Vector2 pos, World world){
         balls = new Array<>();
         ballActive = 0;
@@ -23,8 +23,13 @@ public  class BallsManager {
 
     }
     static public void update(){
+        if(reset){
+            resetBalls();
+        }
         for(Ball ball : balls){
             ball.update();
+            if(!ball.active) ball.setTrans(balls.get(ballActive).getBody().getTransform());
+            ball.updateState();
 
         }
     }

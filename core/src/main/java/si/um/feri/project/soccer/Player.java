@@ -20,6 +20,12 @@ public class Player extends Sprite {
     static public float MAX_SPEED = 20f;
     private TextureRegion texture;
 
+    public void setFreeze(boolean freeze) {
+        this.freeze = freeze;
+    }
+
+    private boolean freeze;
+
     public int getScore() {
         return score;
     }
@@ -97,7 +103,7 @@ public class Player extends Sprite {
 
     }
     public void resetPlayer(){
-        headBody.setTransform(resetState.x+getWidth(), resetState.y, 0);
+        headBody.setTransform(resetState.x + ((id == ID.RIGHT) ? getWidth() : 0), resetState.y, 0);
 
         // Reset velocity and rotation
         headBody.setLinearVelocity(Vector2.Zero);
@@ -108,9 +114,13 @@ public class Player extends Sprite {
 
         // Reset rotation
         setRotation(0);
+        markReset = false;
     }
 
     public void handleInput(float de) {
+        if(freeze){
+            return;
+        }
         if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED) {
             headBody.applyLinearImpulse(new Vector2(-20, 0),headBody.getWorldCenter(), true);  // Move left
         }

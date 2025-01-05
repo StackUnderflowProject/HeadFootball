@@ -12,6 +12,7 @@ public class AssetPacker {
         TexturePacker.Settings settings = new TexturePacker.Settings();
         settings.maxWidth = 32768;
         settings.maxHeight = 32768;
+        settings.useIndexes = true;
         TexturePacker.process(settings,
             RAW_ASSETS_PATH ,   // the directory containing individual images to be packed
             ASSETS_PATH,   // the directory where the pack file will be written

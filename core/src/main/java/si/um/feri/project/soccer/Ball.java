@@ -49,7 +49,7 @@ public class Ball extends Sprite {
 // Set our body's starting position in the world
         bodyDef.position.set(pos);
         bodyDef.linearVelocity.y = 0;
-        bodyDef.linearVelocity.x = -50f;
+        bodyDef.linearVelocity.x = 0f;
 
         body = world.createBody(bodyDef);
         body.setBullet(true);
@@ -64,7 +64,7 @@ public class Ball extends Sprite {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = circle;
         fixtureDef.filter.categoryBits = Bits.BALL_BIT;
-        fixtureDef.filter.maskBits = Bits.GROUND_BIT | Bits.GOALSENSOR_BIT | Bits.PLAYER_BIT;
+        fixtureDef.filter.maskBits = Bits.GROUND_BIT | Bits.GOALSENSOR_BIT | Bits.PLAYER_BIT |Bits.POWERUP_BIT;
         fixtureDef.density = 0.5f;
         fixtureDef.friction = 0.5f;
         body.setLinearDamping(0.4f);  // Apply linear damping to slow down the ball over time
