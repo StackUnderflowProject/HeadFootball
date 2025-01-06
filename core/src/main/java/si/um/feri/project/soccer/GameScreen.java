@@ -238,9 +238,10 @@ public class GameScreen extends ScreenAdapter {
         bodyDef.linearVelocity.y = 0;
         bodyDef.linearVelocity.x = 0f;
 
-        Player1 = new Player(team1.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.RIGHT,Input.Keys.A,Input.Keys.D,Input.Keys.W);
-        Player2 = new Player(team2.getPlayer(),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.LEFT,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
-       // Gdx.input.setInputProcessor(new InputMultiplexer(Player1.getProcesor(),Player2.getProcesor()));
+        Player1 = new Player(team1.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.LEFT,Input.Keys.A,Input.Keys.D,Input.Keys.W);
+        Player2 = new Player(team2.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.RIGHT,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
+        PlayerManager.initialize(Player1,Player2);
+        // Gdx.input.setInputProcessor(new InputMultiplexer(Player1.getProcesor(),Player2.getProcesor()));
         /* goal1 = createGoal(world, 0, 4f, 6, 10f, true);
         Sprite goal1Sprite = new Sprite(gameplayAtlas.findRegion("goal"));
         goal1Sprite.setPosition(0,4);
@@ -370,10 +371,13 @@ public class GameScreen extends ScreenAdapter {
                     state = GameState.KICKOFF;
                     kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
-                    PowerUpManager.setToClear(true);
                     BallsManager.toggleBall(BallType.NORMAL);
                     GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
                     GoalManager.toggleGoal(GoalType.NORMAL,ID.RIGHT);
+                    PlayerManager.unfreezePlayer(ID.LEFT);
+                    PlayerManager.unfreezePlayer(ID.RIGHT);
+
+                    PowerUpManager.setToClear(true);
 
                     BallsManager.reset = true;
                     break;
@@ -566,9 +570,8 @@ public class GameScreen extends ScreenAdapter {
         if(state != GameState.KICKOFF){
             world.step(delta,6,6);
             if(PowerUpManager.isToClear()) PowerUpManager.clear();
-            GoalManager.update();
             BallsManager.update();
-
+            GoalManager.update();
             PowerUpManager.update(delta);
             if(Player1.markReset){
                 Player1.resetPlayer();
