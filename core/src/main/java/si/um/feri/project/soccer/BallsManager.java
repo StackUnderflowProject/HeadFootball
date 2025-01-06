@@ -28,7 +28,10 @@ public  class BallsManager {
         }
         for(Ball ball : balls){
             ball.update();
-            if(!ball.active) ball.setTrans(balls.get(ballActive).getBody().getTransform());
+            if(!ball.active) {
+                ball.setTrans(balls.get(ballActive).getBody().getTransform());
+                ball.getBody().setLinearVelocity(balls.get(ballActive).getBody().getLinearVelocity());
+            }
             ball.updateState();
 
         }
