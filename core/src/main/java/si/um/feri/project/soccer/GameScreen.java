@@ -42,7 +42,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 public class GameScreen extends ScreenAdapter {
     private final SoccerGame game;
     private final AssetManager assetManager;
-    private final Array<PowerUp> powerUp;
+    //private final Array<PowerUp> powerUp;
+
     private Viewport viewport;
     private Stage stage;
     private Viewport UIviewport;
@@ -255,8 +256,11 @@ public class GameScreen extends ScreenAdapter {
 
         goal2sprite.setFlip(true,false);
         gameObjects.add(new GameObject(goal2sprite,goal2));*/
-        powerUp = new Array<>();
-        powerUp.add(new GoalPowerUp(PowerUpType.GOOD,PowerUpEffectType.GOALBIG,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
+        //powerUp = new Array<>();
+        PowerUpManager.initialize(gameplayAtlas,viewport,world);
+        //powerUp.add(new GoalPowerUp(PowerUpType.GOOD,PowerUpEffectType.GOALBIG,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
+        //powerUp.add(new BallPowerUp(PowerUpEffectType.BALLDULL,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
+
         world.setContactListener(new MyContactListener());
         createBounds(world);
     }
@@ -327,13 +331,12 @@ public class GameScreen extends ScreenAdapter {
             Object userDataA = fixtureA.getBody().getUserData();
             Object userDataB = fixtureB.getBody().getUserData();
             int col = fixtureB.getFilterData().categoryBits | fixtureA.getFilterData().categoryBits;
-            System.out.println("HIt" + col);
             switch (col){
                 case Bits.BALL_BIT | Bits.POWERUP_BIT:
                 {
-                    System.out.println("HIt");
                     PowerUp pu = userDataB instanceof PowerUp ? ((PowerUp) userDataB) : ((PowerUp) userDataA);
                     pu.activate();
+                    //PowerUpManager.move(pu);
                     pu.setToDestroy(true);
                     break;
                 }
@@ -351,7 +354,6 @@ public class GameScreen extends ScreenAdapter {
                     Goal goalSprite = userDataB instanceof Goal ? ((Goal) userDataB) : ((Goal) userDataA);
                     Ball ballSprite = userDataB instanceof Ball ? ((Ball) userDataB) : ((Ball) userDataA);
 
-                    System.out.println("Sensor Ball");
 
                     if(goalSprite.id == ID.LEFT) {
                         Player2.incScore();
@@ -368,9 +370,11 @@ public class GameScreen extends ScreenAdapter {
                     state = GameState.KICKOFF;
                     kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
+                    PowerUpManager.setToClear(true);
+                    BallsManager.toggleBall(BallType.NORMAL);
+                    GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
+                    GoalManager.toggleGoal(GoalType.NORMAL,ID.RIGHT);
 
-                    BallsManager.toggleBall(BallType.BOUNCY);
-                    //GoalManager.toggleGoal(GoalType.BIG);
                     BallsManager.reset = true;
                     break;
                 }
@@ -514,8 +518,7 @@ public class GameScreen extends ScreenAdapter {
         batch.begin();
         Player1.draw(batch);
         Player2.draw(batch);
-        for(PowerUp p : powerUp)
-            p.draw(batch);
+        PowerUpManager.draw(batch);
         //Goal1.draw(batch);
         //Goal2.draw(batch);
         GoalManager.draw(batch);
@@ -562,14 +565,11 @@ public class GameScreen extends ScreenAdapter {
 
         if(state != GameState.KICKOFF){
             world.step(delta,6,6);
+            if(PowerUpManager.isToClear()) PowerUpManager.clear();
             GoalManager.update();
             BallsManager.update();
-            for (PowerUp p : powerUp) {
-                p.update(delta);
-                if (p.isDestroyed()) {
-                    //powerUp.removeValue(p,true);
-                }
-            }
+
+            PowerUpManager.update(delta);
             if(Player1.markReset){
                 Player1.resetPlayer();
             }

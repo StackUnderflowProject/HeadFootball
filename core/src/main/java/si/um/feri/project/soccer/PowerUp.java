@@ -18,6 +18,17 @@ abstract public class PowerUp extends Sprite {
     private Body body;
     private World world;
     private boolean toDestroy = false;
+    private boolean activated = false;
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+
 
     public PowerUpEffectType getEffectType() {
         return effectType;
@@ -70,11 +81,12 @@ abstract public class PowerUp extends Sprite {
     public void createBody(World world, float width, float height, Vector2 pos) {
         // Create the head (rectangular body with rounded top corners)
         BodyDef headDef = new BodyDef();
-        headDef.type = BodyDef.BodyType.StaticBody;  // Make the head dynamic
+        headDef.type = BodyDef.BodyType.KinematicBody;  // Make the head dynamic
         headDef.position.set(pos.x + width / 2, pos.y + height / 2);  // Position head above the player
         body = world.createBody(headDef);
         body.setFixedRotation(true);
         body.setLinearDamping(0.8f);
+
         CircleShape headShape = new CircleShape();
 
         headShape.setRadius((width- 1)/ 2);  // Set half-width and height for the rectangle
@@ -82,6 +94,7 @@ abstract public class PowerUp extends Sprite {
         headFixture.shape = headShape;
         headFixture.density = 1f;
         headFixture.friction = 3f;
+        headFixture.isSensor = true;
         headFixture.filter.categoryBits = Bits.POWERUP_BIT;
         headFixture.filter.maskBits =Bits.BALL_BIT;
         body.createFixture(headFixture);  // Attach fixture to the head body
@@ -112,5 +125,7 @@ abstract public class PowerUp extends Sprite {
             destroyed = true;
         }
     }
-
+    public void destroy(){
+        world.destroyBody(body);
+    }
 }

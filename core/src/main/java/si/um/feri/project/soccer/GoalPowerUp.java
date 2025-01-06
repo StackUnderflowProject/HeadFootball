@@ -8,7 +8,6 @@ import com.badlogic.gdx.physics.box2d.World;
 
 public class GoalPowerUp extends PowerUp {
     private TextureRegion effectIcon;
-    private boolean activated = false;
     private float elapsedTime = 0f;
     public GoalPowerUp(PowerUpType type,PowerUpEffectType effectType, TextureAtlas atlas, Vector2 pos, World world) {
         super(type, atlas, 3f, 3f, pos, world,effectType);
@@ -18,13 +17,14 @@ public class GoalPowerUp extends PowerUp {
 
     @Override
     void activate() {
-        activated = true;
+        setActivated(true);
         switch (super.getEffectType()){
             case GOALBIG:
                 GoalManager.toggleGoal(GoalType.BIG,BallsManager.lastTouched);
                 break;
             case GOALMEDIUM:
-                GoalManager.toggleGoal(GoalType.NORMAL,BallsManager.lastTouched);
+                GoalManager.toggleGoal(GoalType.BIG,ID.RIGHT);
+                GoalManager.toggleGoal(GoalType.BIG,ID.LEFT);
                 break;
             case GOALSMALL:
                 GoalManager.toggleGoal(GoalType.SMALL,BallsManager.lastTouched);
@@ -36,7 +36,7 @@ public class GoalPowerUp extends PowerUp {
 
     @Override
     void deactivate() {
-
+        setActivated(false);
     }
 
     @Override
@@ -57,12 +57,15 @@ public class GoalPowerUp extends PowerUp {
     @Override
     public void update(float delta) {
         super.update(delta);
-        if(activated){
+        if(isActivated()){
             elapsedTime += delta;
             if(elapsedTime > 3){
                 deactivate();
-                System.out.println(BallsManager.lastTouched);
-                GoalManager.toggleGoal(GoalType.NORMAL,BallsManager.lastTouched);
+                destroy();
+                GoalManager.toggleGoal(GoalType.NORMAL,ID.RIGHT);
+                GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
+
+                PowerUpManager.remove(this);
                 elapsedTime = 0f;
             }
         }
