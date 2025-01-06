@@ -13,6 +13,7 @@ public  class PowerUpManager {
     private static TextureAtlas atlas1;
     private static World world1;
     private static float spawnTimer = 0f;  // Timer to track the spawn interval
+    private static final float SPAWNTIME = 5f;
 
     public static boolean isToClear() {
         return toClear;
@@ -59,13 +60,15 @@ public  class PowerUpManager {
             case GOALBIG:
                 active.add(new GoalPowerUp(PowerUpType.GOOD,randomEffect,atlas1,new Vector2(randomX,randomY),world1));
                 break;
+            case ICE:
+                active.add(new IcePowerUp(randomType,randomEffect,atlas1,new Vector2(randomX,randomY),world1));
         }
 
     }
     static public void update(float delta){
         spawnTimer += delta;  // Increment the timer by the delta time
-        if (spawnTimer >= 3f) {  // If 3 seconds have passed
-            if (active.size <= 0){
+        if (spawnTimer >= SPAWNTIME) {  // If 3 seconds have passed
+            if (active.size <= 3){
                 spawn();  // Call spawn method
             }
             spawnTimer = 0f;  // Reset the timer

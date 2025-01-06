@@ -1,8 +1,6 @@
 package si.um.feri.project.soccer;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -12,19 +10,22 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Cell;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
 public class Player extends Sprite {
     static public float MAX_SPEED = 20f;
-    private TextureRegion texture;
 
-    public void setFreeze(boolean freeze) {
-        this.freeze = freeze;
+    public boolean isFrozen() {
+        return isFrozen;
     }
 
-    private boolean freeze;
+    public void setFrozen(boolean frozen) {
+        isFrozen = frozen;
+    }
+
+    private boolean isFrozen = false;
+    private TextureRegion ice;
+
+
 
     public int getScore() {
         return score;
@@ -52,9 +53,10 @@ public class Player extends Sprite {
 
 
 
-    public Player(TextureRegion region, float width, float height, Vector2 pos, World world, ID id,int leftKey,int rightKey,int jumpKey) {
+    public Player(TextureRegion region,TextureRegion ice, float width, float height, Vector2 pos, World world, ID id,int leftKey,int rightKey,int jumpKey) {
         setRegion(region);
         this.id = id;
+        this.ice = ice;
         setSize(width, height);
         setPosition(pos.x, pos.y + height /2);
         createHead(world, width, height, pos);  // Create the head body
@@ -118,13 +120,11 @@ public class Player extends Sprite {
     }
 
     public void handleInput(float de) {
-        if(freeze){
-            return;
-        }
-        if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED) {
+
+        if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
             headBody.applyLinearImpulse(new Vector2(-20, 0),headBody.getWorldCenter(), true);  // Move left
         }
-        if (Gdx.input.isKeyPressed(rightKey) && headBody.getLinearVelocity().x < MAX_SPEED) {
+        if (Gdx.input.isKeyPressed(rightKey) && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
             headBody.applyLinearImpulse(new Vector2(20, 0),headBody.getWorldCenter(), true);  // Move right
         }
         if (Gdx.input.isKeyJustPressed(jumpKey) && grounded ) {
@@ -147,19 +147,19 @@ public class Player extends Sprite {
         // Check if the AI needs to move closer or farther
         if (distanceToTarget > desiredDistance) {
             // Move closer to the target
-            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED) {
+            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
                 // Move left
                 headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
-            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED) {
+            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
                 // Move right
                 headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
             }
         } else if (distanceToTarget < desiredDistance * 0.8f) {
             // Move farther away from the target (adds a buffer zone to prevent oscillation)
-            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED) {
+            if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
                 // Move right (away from target)
                 headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
-            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED) {
+            } else if (targetPosition.x > aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
                 // Move left (away from target)
                 headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
             }
@@ -184,7 +184,18 @@ public class Player extends Sprite {
 
 
     public void draw(SpriteBatch batch) {
+        float width = super.getWidth() * 0.8f;
+        float heght = super.getWidth() *0.8f;
+
+        float iconX = getX()+width/4;
+        float iconY = getY();
         super.draw(batch);  // Draw the player sprite
+        batch.setColor(1f, 1f, 1f, 0.8f); // Set the batch color with alpha
+
+        if(isFrozen)batch.draw(ice, iconX, iconY, width, heght);
+        batch.setColor(1f, 1f, 1f, 1); // Set the batch color with alpha
+
+
         // The head is part of the physics world, so no need to manually draw it
     }
 

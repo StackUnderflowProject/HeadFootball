@@ -20,6 +20,15 @@ abstract public class PowerUp extends Sprite {
     private boolean toDestroy = false;
     private boolean activated = false;
 
+    public PowerUpType getType() {
+        return type;
+    }
+
+    public void setType(PowerUpType type) {
+        this.type = type;
+    }
+
+    private PowerUpType type;
     public boolean isActivated() {
         return activated;
     }
@@ -45,7 +54,6 @@ abstract public class PowerUp extends Sprite {
 
     private boolean destroyed;
     private float elapsedTime = 0;
-    // Circular body for the head
 
 
 
@@ -54,6 +62,7 @@ abstract public class PowerUp extends Sprite {
 
             // Initialize animation based on type
             this.effectType = effectType;
+            this.type = type;
             Array<TextureAtlas.AtlasRegion> regions;
             switch (type) {
                 case BAD:

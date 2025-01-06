@@ -12,7 +12,7 @@ import com.badlogic.gdx.physics.box2d.World;
 
 public class Goal extends Sprite {
 
-    public boolean active;
+    public boolean active = false;
     private Body body;
     public ID id;
     public Goal(TextureRegion region, float width,float height, Vector2 pos, World world,ID id) {
@@ -73,11 +73,13 @@ public class Goal extends Sprite {
         body.createFixture(rightFix);
         body.setUserData(this);
 // Dispose of the shape when done
+        body.setActive(false);
         edgeShape.dispose();
     }
 
     public void setActive(boolean active){
         this.active = active;
+
     }
     public void updateState(){
         body.setActive(active);

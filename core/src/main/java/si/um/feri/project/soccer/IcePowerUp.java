@@ -6,35 +6,37 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 
-public class GoalPowerUp extends PowerUp {
+public class IcePowerUp extends PowerUp {
     private TextureRegion effectIcon;
+    private boolean activated = false;
+    private ID frozen;
     private float elapsedTime = 0f;
-    private ID lastTouched;
-    public GoalPowerUp(PowerUpType type,PowerUpEffectType effectType, TextureAtlas atlas, Vector2 pos, World world) {
+    public IcePowerUp(PowerUpType type,PowerUpEffectType effectType, TextureAtlas atlas, Vector2 pos, World world) {
         super(type, atlas, 3f, 3f, pos, world,effectType);
-        this.effectIcon = atlas.findRegion(RegionNames.Textures.SMALL);
-        this.effectIcon.flip(true,false);
+        this.effectIcon = atlas.findRegion(RegionNames.Textures.ICE);
     }
 
     @Override
     void activate() {
-        lastTouched = BallsManager.lastTouched;
+        frozen = BallsManager.lastTouched;
+        activated = true;
+        if(super.getEffectType() == PowerUpEffectType.ICE){
+            switch (super.getType()){
+                case BAD:
+                    PlayerManager.freezePlayer(frozen);
+                    break;
+                case GOOD:
+                    PlayerManager.freezePlayer(((frozen == ID.LEFT) ? ID.RIGHT : ID.LEFT));
+                    break;
+                case NEUTRAL:
+                    PlayerManager.freezePlayer(ID.LEFT);
+                    PlayerManager.freezePlayer(ID.RIGHT);
 
-        setActivated(true);
-        switch (super.getEffectType()){
-            case GOALBIG:
-                GoalManager.toggleGoal(GoalType.BIG,((lastTouched == ID.LEFT ) ? ID.RIGHT : ID.LEFT));
-                break;
-            case GOALMEDIUM:
-                GoalManager.toggleGoal(GoalType.BIG,ID.RIGHT);
-                GoalManager.toggleGoal(GoalType.BIG,ID.LEFT);
-                break;
-            case GOALSMALL:
-                GoalManager.toggleGoal(GoalType.BIG,lastTouched);
-                break;
-            default:
-                System.out.println("Wrong type");
+            }
         }
+    }
+    public void setFrozen(ID id){
+        this.frozen = id;
     }
 
     @Override
@@ -60,20 +62,23 @@ public class GoalPowerUp extends PowerUp {
     @Override
     public void update(float delta) {
         super.update(delta);
-        if(isActivated()){
+        if(activated){
+            System.out.println("Destoy");
+
             elapsedTime += delta;
-            if(elapsedTime > 3){
+            if(elapsedTime > 5){
                 deactivate();
                 destroy();
                 if(getType() == PowerUpType.NEUTRAL){
-                    GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
-                    GoalManager.toggleGoal(GoalType.NORMAL,ID.RIGHT);
-
+                    PlayerManager.unfreezePlayer(ID.RIGHT);
+                    PlayerManager.unfreezePlayer(ID.LEFT);
                 } else if (getType() == PowerUpType.GOOD) {
-                    GoalManager.toggleGoal(GoalType.NORMAL,(lastTouched == ID.LEFT) ? ID.RIGHT : ID.LEFT);
-                }
-                GoalManager.toggleGoal(GoalType.NORMAL,lastTouched);
+                    PlayerManager.unfreezePlayer((ID.LEFT == frozen) ? ID.RIGHT : ID.LEFT);
 
+                } else{
+                    PlayerManager.unfreezePlayer(frozen);
+
+                }
                 PowerUpManager.remove(this);
                 elapsedTime = 0f;
             }

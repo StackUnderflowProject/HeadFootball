@@ -25,7 +25,7 @@ public class GoalManager {
             float height = GameConfig.GOALHEIGHT + i * 2f;
             goals1.add(new Goal(atlas.findRegion(GoalType.valueOf(i).getRegionname()),width,height,new Vector2(0,GameConfig.GROUNDLEVEL),world,ID.LEFT));
             goals2.add(new Goal(atlas.findRegion(GoalType.valueOf(i).getRegionname()),width,height,new Vector2(worldWidth - width,GameConfig.GROUNDLEVEL),world,ID.RIGHT));
-
+            System.out.println("Gals1: " + goals1.get(i));
         }
         goals1.get(goalActive1).setActive(true);
         goals2.get(goalActive2).setActive(true);
@@ -45,6 +45,7 @@ public class GoalManager {
     static public void toggleGoal(GoalType type,ID id){
         for(int i = 0; i < goals1.size; i++){
             if(i == type.getValue()){
+                System.out.println("Goal type : "  + type);
                 if(id == ID.LEFT){
                     goals1.get(i).setActive(true);
                     goalActive1 = i;

@@ -31,6 +31,7 @@ public  class BallsManager {
             if(!ball.active) {
                 ball.setTrans(balls.get(ballActive).getBody().getTransform());
                 ball.getBody().setLinearVelocity(balls.get(ballActive).getBody().getLinearVelocity());
+                ball.getBody().setAngularVelocity(balls.get(ballActive).getBody().getAngularVelocity());
             }
             ball.updateState();
 
