@@ -9,8 +9,12 @@ public class AssetsPaths {
     public static final String FONT1 = "assets/fonts/pixel.fnt";
     public static final String FONT2 =  "assets/fonts/plump.fnt";
     public static final String GOVERFONT = "assets/fonts/GameOver.fnt";
+    public static final String INFO =  "assets/fonts/info.fnt";
+    public static final String INFOGREEN =  "assets/fonts/infogreen.fnt";
 
     public static final String SKIN = "assets/ui/uiskin.json";
+    public static final String MUSIC = "assets/sounds/loop.mp3";
+
 
     private AssetsPaths() {
     }

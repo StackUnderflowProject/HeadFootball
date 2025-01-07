@@ -37,15 +37,15 @@ public class Goal extends Sprite {
 // Bottom edge
         edgeShape.set(pos.x, pos.y, pos.x + width, pos.y);
 
-        body.createFixture(edgeShape, 0);
+        //body.createFixture(edgeShape, 0);
 
-  edgeShape.set(pos.x, pos.y + height, pos.x + width, pos.y + height);
+  //edgeShape.set(pos.x, pos.y + height + 2, pos.x + width, pos.y + height);
   if(ID.RIGHT == id){
       edgeShape.set(pos.x, pos.y + height, pos.x + width, pos.y + height + 2);
 
   }
   else{
-      edgeShape.set(pos.x, pos.y + height + 2, pos.x + width, pos.y + height);
+      edgeShape.set(pos.x, pos.y + height+2, pos.x + width, pos.y + height );
 
   }
   FixtureDef topFix = new FixtureDef();
@@ -56,6 +56,9 @@ public class Goal extends Sprite {
 
 // Left edge
         edgeShape.set(pos.x,pos.y,pos.x, pos.y + height - 2);
+        if(id == ID.RIGHT){
+            edgeShape.set(pos.x+2, pos.y, pos.x +2,pos.y + height -2);
+        }
         FixtureDef leftFix = new FixtureDef();
         leftFix.shape = edgeShape;
         leftFix.filter.categoryBits = (ID.RIGHT == id) ? Bits.GOALSENSOR_BIT :  Bits.GROUND_BIT;
@@ -65,6 +68,9 @@ public class Goal extends Sprite {
 
 // Right edge
         edgeShape.set(pos.x + width, pos.y, pos.x + width, pos.y + height - 2);
+        if(id == ID.LEFT){
+            edgeShape.set(pos.x + width - 2, pos.y, pos.x + width -2 , pos.y + height - 2);
+        }
         FixtureDef rightFix = new FixtureDef();
         rightFix.shape = edgeShape;
         rightFix.filter.categoryBits = (ID.LEFT == id) ? Bits.GOALSENSOR_BIT :  Bits.GROUND_BIT;

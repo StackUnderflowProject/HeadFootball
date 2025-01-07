@@ -122,10 +122,10 @@ public class Player extends Sprite {
     public void handleInput(float de) {
 
         if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(-20, 0),headBody.getWorldCenter(), true);  // Move left
+            headBody.applyLinearImpulse(new Vector2(-MAX_SPEED, 0),headBody.getWorldCenter(), true);  // Move left
         }
         if (Gdx.input.isKeyPressed(rightKey) && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(20, 0),headBody.getWorldCenter(), true);  // Move right
+            headBody.applyLinearImpulse(new Vector2(MAX_SPEED, 0),headBody.getWorldCenter(), true);  // Move right
         }
         if (Gdx.input.isKeyJustPressed(jumpKey) && grounded ) {
             headBody.applyLinearImpulse(new Vector2(0, 200), headBody.getWorldCenter(),true);  // Move up

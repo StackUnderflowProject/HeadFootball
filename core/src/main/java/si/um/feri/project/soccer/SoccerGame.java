@@ -20,7 +20,7 @@ public class SoccerGame extends Game {
     }
 
     private AssetManager assetManager;
-    public Music music;
+    static public Music music;
     public Long musicID;
 
     public SpriteBatch getBatch() {
@@ -28,6 +28,8 @@ public class SoccerGame extends Game {
     }
 
     private SpriteBatch batch;
+    static public void loadMusic(){
+music.setVolume(GamePreferences.loadMusicVolume());    }
     @Override
     public void create() {
         Gdx.app.setLogLevel(Application.LOG_ERROR);
@@ -39,17 +41,25 @@ public class SoccerGame extends Game {
         assetManager.load(AssetDescriptors.FONT1);
         assetManager.load(AssetDescriptors.FONT2);
         assetManager.load(AssetDescriptors.GAMEOVER);
-
+        assetManager.load(AssetDescriptors.INFO);
+        assetManager.load(AssetDescriptors.INFOGREEN);
+assetManager.load(AssetDescriptors.LOOP);
         assetManager.finishLoading();
 
         assetManager.getLogger().setLevel(Logger.ERROR);
         TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
+        music = assetManager.get(AssetDescriptors.LOOP);
+        music.setVolume(GamePreferences.loadMusicVolume());
+        music.setLooping(true);
+        music.play();
+
         batch = new SpriteBatch();
         String t1 = "Maribor";
-        String t2 = "Olimpija";
+        String t2 = "Koper";
         System.out.println(t1.toLowerCase() + ".p");
-        //setScreen(new GameOverScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),new Player(atlas.findRegion(t2.toLowerCase()),10,10,new Vector2(),new World(new Vector2(),false),ID.GOAL1,1,1,1),new Player(atlas.findRegion(t2.toLowerCase()),100,100,new Vector2(0,0),new World(new Vector2(0,0),false),ID.GOAL1,1,1,1)));
-        setScreen(new SelectionScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.LOCALMULTIPLAYER));
+        setScreen(new MenuScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.SINGLEPLAYER));
+        //setScreen(new GameOverScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),new Player(atlas.findRegion(t2.toLowerCase()),atlas.findRegion(RegionNames.Textures.ICE),10,10,new Vector2(),new World(new Vector2(),false),ID.LEFT,1,1,1),new Player(atlas.findRegion(t2.toLowerCase()),atlas.findRegion(RegionNames.Textures.ICE),100,100,new Vector2(0,0),new World(new Vector2(0,0),false),ID.RIGHT,1,1,1)));
+        //setScreen(new SelectionScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.SINGLEPLAYER));
 
 
     }
