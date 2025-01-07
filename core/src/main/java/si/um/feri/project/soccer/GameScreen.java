@@ -1,6 +1,8 @@
 package si.um.feri.project.soccer;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
@@ -25,14 +27,20 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -81,7 +89,7 @@ public class GameScreen extends ScreenAdapter {
         this.mode = mode;
         this.batch = game.getBatch();
         accumulator = 0f;
-        elapsedTime = 1000;
+        elapsedTime = 10;
         assetManager = game.getAssetManager();
 
         world = new World(new Vector2(0, -15), true);
@@ -96,6 +104,9 @@ public class GameScreen extends ScreenAdapter {
         stage = new Stage(viewport, game.getBatch());
         UIviewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
         UIstage = new Stage(UIviewport,game.getBatch());
+        InputMultiplexer ml = new InputMultiplexer(UIstage,stage);
+        Gdx.input.setInputProcessor(ml);
+
         Table rootTable = new Table();
         rootTable.setFillParent(true); // Make the table fill the stage
 
@@ -220,14 +231,45 @@ public class GameScreen extends ScreenAdapter {
         rootTable.add(stack).size(50, 50).expand().center().padLeft(30); // Set stack size and center it
 
 // Add the root table to the stage
-        UIstage.addActor(rootTable);
+        ImageButton.ImageButtonStyle musicButtonStyle = new ImageButton.ImageButtonStyle();
+        rootTable.row();
+        musicButtonStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.ON)); // Music on texture
+        musicButtonStyle.checked = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.OFF)); // Music off texture
+        ImageButton musicButton = new ImageButton(musicButtonStyle);
+        musicButton.setChecked(GamePreferences.loadMusicVolume() == 0);
+        musicButton.setTransform(true);
+        musicButton.setTouchable(Touchable.enabled);
+        musicButton.setOrigin(Align.center);
+        musicButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                System.out.println("PAUSE");
+                GamePreferences.toggleMusic(); // Assuming you have a method in SoccerGame for toggling music
+                SoccerGame.loadMusic();
+            }
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                musicButton.addAction(Actions.scaleTo(1.1f, 1.1f, 0.1f)); // Scale up to 120% over 0.1 seconds
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                musicButton.addAction(Actions.scaleTo(1f, 1f, 0.1f)); // Scale back to normal
+            }
+        });
+
+        ;
 
 
-
+        // Set the input processor
         Image background = new Image(gameplayAtlas.findRegion(RegionNames.Textures.FIELD));
 
         background.setSize(viewport.getWorldWidth(), viewport.getWorldHeight());
         stage.addActor(background);
+
+
+
+        // stage.addActor(layoutTable);
 
         BodyDef bodyDef = new BodyDef();
 // We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
@@ -241,29 +283,13 @@ public class GameScreen extends ScreenAdapter {
         Player1 = new Player(team1.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.LEFT,Input.Keys.A,Input.Keys.D,Input.Keys.W);
         Player2 = new Player(team2.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.RIGHT,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
         PlayerManager.initialize(Player1,Player2);
-        // Gdx.input.setInputProcessor(new InputMultiplexer(Player1.getProcesor(),Player2.getProcesor()));
-        /* goal1 = createGoal(world, 0, 4f, 6, 10f, true);
-        Sprite goal1Sprite = new Sprite(gameplayAtlas.findRegion("goal"));
-        goal1Sprite.setPosition(0,4);
-        goal1Sprite.setSize(6, 10); // Set the goal sprite size
-        goal1Sprite.setOrigin(goal1Sprite.getWidth() / 2f, goal1Sprite.getHeight() / 2f); // Center the sprite's origin
-
-        Body goal2 = createGoal(world,viewport.getWorldWidth() - 6,4f,6,10f,false);
-        gameObjects.add(new GameObject(goal1Sprite,goal1));
-        Sprite goal2sprite = new Sprite(gameplayAtlas.findRegion("goal"));
-        goal2sprite.setPosition(viewport.getWorldWidth()-6,4);
-        goal2sprite.setSize(6, 10); // Set the goal sprite size
-        goal2sprite.setOrigin(goal2sprite.getWidth() / 2f, goal2sprite.getHeight() / 2f); // Center the sprite's origin
-
-        goal2sprite.setFlip(true,false);
-        gameObjects.add(new GameObject(goal2sprite,goal2));*/
-        //powerUp = new Array<>();
         PowerUpManager.initialize(gameplayAtlas,viewport,world);
-        //powerUp.add(new GoalPowerUp(PowerUpType.GOOD,PowerUpEffectType.GOALBIG,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
-        //powerUp.add(new BallPowerUp(PowerUpEffectType.BALLDULL,gameplayAtlas,new Vector2(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2f),world));
 
         world.setContactListener(new MyContactListener());
         createBounds(world);
+        rootTable.add(musicButton).right().pad(10,0,0,10);
+        UIstage.addActor(rootTable);
+
     }
     public Pixmap extractPixmapFromTextureRegion(TextureRegion textureRegion) {
         TextureData textureData = textureRegion.getTexture().getTextureData();
@@ -323,6 +349,11 @@ public class GameScreen extends ScreenAdapter {
         pixmap.fill();
         return pixmap;
     }
+
+    public Stage getStage() {
+        return stage;
+    }
+
     public class MyContactListener implements ContactListener {
 
         @Override
@@ -369,7 +400,8 @@ public class GameScreen extends ScreenAdapter {
                     score1.setText(Player1.getScore());
                     score2.setText(Player2.getScore());
                     state = GameState.KICKOFF;
-                    kickOffTime = 3;
+                    if(elapsedTime == 0) {state = GameState.OVERTIME;timeValueLabel.setText("OVER TIME");};
+                    if(state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())game.setScreen(new GameOverScreen(game,team1,team2,Player1,Player2));                    kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
                     BallsManager.toggleBall(BallType.NORMAL);
                     GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
@@ -509,6 +541,7 @@ public class GameScreen extends ScreenAdapter {
     public void resize(int width, int height) {
         // Update the viewport whenever the window is resized
         viewport.update(width, height, true);
+        UIviewport.update(width,height,true);
     }
 
     @Override
@@ -531,6 +564,7 @@ public class GameScreen extends ScreenAdapter {
         batch.end();
         update(delta);
         renderer.render(world,viewport.getCamera().combined);
+
         UIstage.act(delta);
         UIstage.draw();
     }
@@ -590,19 +624,26 @@ public class GameScreen extends ScreenAdapter {
     }
     @Override
     public void hide() {
-
         dispose();
     }
+    private void disposeWorld(World world) {
+        if (world != null) {
+            Array<Body> bodies= new Array<>();
+            world.getBodies(bodies);
+            for (Body body :  bodies){
+                world.destroyBody(body);
+            }
+            world.setContactListener(null);
+            world.dispose();
+            world = null;
+        }
+    }
+
 
     @Override
     public void dispose() {
         stage.dispose();
         UIstage.dispose();
-        Array<Body> bodies = new Array<>();
-        world.getBodies(bodies);
-        for (Body body : bodies) {
-            world.destroyBody(body);
-        }
-        world.dispose();
+
     }
 }

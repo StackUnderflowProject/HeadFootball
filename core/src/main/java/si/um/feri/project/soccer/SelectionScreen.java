@@ -144,7 +144,7 @@ public class SelectionScreen extends ScreenAdapter {
             InputMultiplexer inputMultiplexer = new InputMultiplexer();
 
             ipcpu = new PlayerInputProcessorCpu(player1, player2,
-                Input.Keys.RIGHT, Input.Keys.LEFT, team1Table, team2Table, playerIconsTable);
+                Input.Keys.A, Input.Keys.D, team1Table, team2Table, playerIconsTable);
             inputMultiplexer.addProcessor(ipcpu);
 
             inputMultiplexer.addProcessor(stage); // Make sure you pass the Stage instance here

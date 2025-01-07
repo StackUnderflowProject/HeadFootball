@@ -23,9 +23,8 @@ public class RegionNames {
         public static final String HEAD7 = "head7";
         public static final String SHOE7 = "shoe7";
 
-        public static final String HEAD8 = "head8";
-        public static final String SHOE8 = "shoe8";
-
+        public static final String OFF = "off";
+        public static final String ON = "on";
         public static final String BOUNCYBALL = "bouncyball";
         public static final String BALL1 = "ball1";
         public static final String DULL = "dull";
@@ -37,9 +36,9 @@ public class RegionNames {
         public static final String POWERUPGOOD = "good";
         public static final String ICE = "ice";
 
-
-        public static final String D1 = "1";
-        public static final String D2 = "2";
+        public static final String GREEN = "t";
+        public static final String SINGLEPLAYER = "singleplayer";
+        public static final String MULTIPLAYER = "multiplayer";
         public static final String D3 = "3";
         public static final String FIELD = "field";
         public static final String GOALTEXT = "goalText";
