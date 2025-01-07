@@ -31,6 +31,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -63,7 +64,7 @@ public class GameScreen extends ScreenAdapter {
     private Array<GameObject> gameObjects;
     private int elapsedTime;
     private Float accumulator;
-
+    private Stack stack;
 
     private Goal Goal1;
     private Goal Goal2;
@@ -89,14 +90,13 @@ public class GameScreen extends ScreenAdapter {
         this.mode = mode;
         this.batch = game.getBatch();
         accumulator = 0f;
-        elapsedTime = 10;
+        elapsedTime = 120;
         assetManager = game.getAssetManager();
-
         world = new World(new Vector2(0, -15), true);
         gameplayAtlas = assetManager.get(AssetDescriptors.GAMEPLAY);
         fpsLogger = new FPSLogger();
         kickOffImage = new Array<>();
-        state = GameState.KICKOFF;
+        state = GameState.BEGIN;
         gameObjects = new Array<>();
         this.team2 = team2;
         this.team1 = team1;
@@ -120,7 +120,12 @@ public class GameScreen extends ScreenAdapter {
       //  labelStyle.fontColor = Color.BLACK;
 
         timeLabel = new Label("Time:", labelStyle);
-        timeValueLabel = new Label(String.valueOf(elapsedTime), labelStyle);
+        int minutes = elapsedTime / 60;
+        int seconds = elapsedTime % 60;
+
+// Format the time as mm:ss
+        String timeFormatted = String.format("%02d:%02d", minutes, seconds);
+        timeValueLabel = new Label(timeFormatted, labelStyle);
 
 // Create a container for the labels
         Table labelTable = new Table().debugTable(); // Debug for layout visualization
@@ -209,30 +214,22 @@ public class GameScreen extends ScreenAdapter {
 // Move to the next row for additional UI elements
         rootTable.row();
 
-
+        Image im = new Image(gameplayAtlas.findRegion((this.mode == Mode.SINGLEPLAYER) ? RegionNames.Textures.SINGLEINTRO : RegionNames.Textures.MULTIINTRO));
+        im.setName("stack");
 // Create a stack for the images
-        Stack stack = new Stack();
-        labelStyle.font = assetManager.get(AssetDescriptors.GAMEOVER);
-        for(int i = 0;i < kickOffTime;i++){
-            Label l = new Label(String.valueOf(i+1),labelStyle);
-            l.setVisible(false);
-            kickOffImage.add(l);
-            stack.add(l);
-
-        }
-        kickOffImage.get(2).setVisible(true);
 
 // Add some images to the stack
 
 // Add the images to the stack
 
-
 // Add the stack to the center of the root table
-        rootTable.add(stack).size(50, 50).expand().center().padLeft(30); // Set stack size and center it
+
+
+        rootTable.add(im).size(UIviewport.getWorldWidth()/2,UIviewport.getWorldHeight()/3).expand().center(); // Set stack size and center it
+        rootTable.row();
 
 // Add the root table to the stage
         ImageButton.ImageButtonStyle musicButtonStyle = new ImageButton.ImageButtonStyle();
-        rootTable.row();
         musicButtonStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.ON)); // Music on texture
         musicButtonStyle.checked = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.OFF)); // Music off texture
         ImageButton musicButton = new ImageButton(musicButtonStyle);
@@ -258,7 +255,33 @@ public class GameScreen extends ScreenAdapter {
             }
         });
 
-        ;
+        ;ImageButton.ImageButtonStyle pauseButtonStyle = new ImageButton.ImageButtonStyle();
+        rootTable.row();
+        pauseButtonStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.PAUSE)); // Music on texture
+        pauseButtonStyle.checked = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.PAUSE)); // Music off texture
+        ImageButton pauseButton = new ImageButton(pauseButtonStyle);
+       // pauseButton.setChecked(GamePreferences.loadMusicVolume() == 0);
+        pauseButton.setTransform(true);
+        pauseButton.setTouchable(Touchable.enabled);
+        pauseButton.setOrigin(Align.center);
+        pauseButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                System.out.println("PAUSE");
+                if(state != GameState.BEGIN & state != GameState.KICKOFF){
+                    state = (state == GameState.PAUSED) ? GameState.STARTED : GameState.PAUSED;
+                };
+            }
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                pauseButton.addAction(Actions.scaleTo(1.1f, 1.1f, 0.1f)); // Scale up to 120% over 0.1 seconds
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                pauseButton.addAction(Actions.scaleTo(1f, 1f, 0.1f)); // Scale back to normal
+            }
+        });
 
 
         // Set the input processor
@@ -287,7 +310,10 @@ public class GameScreen extends ScreenAdapter {
 
         world.setContactListener(new MyContactListener());
         createBounds(world);
-        rootTable.add(musicButton).right().pad(10,0,0,10);
+        Table btn = new Table();
+        btn.add(musicButton).padRight(5);
+        btn.add(pauseButton).padRight(5);
+        rootTable.add(btn).right().pad(10,0,0,10);
         UIstage.addActor(rootTable);
 
     }
@@ -540,8 +566,11 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void resize(int width, int height) {
         // Update the viewport whenever the window is resized
+
         viewport.update(width, height, true);
-        UIviewport.update(width,height,true);
+        UIviewport.update(width, height,false);
+
+
     }
 
     @Override
@@ -562,8 +591,38 @@ public class GameScreen extends ScreenAdapter {
 
         BallsManager.draw(batch);
         batch.end();
-        update(delta);
-        renderer.render(world,viewport.getCamera().combined);
+        if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && state == GameState.BEGIN){
+            state = GameState.KICKOFF;
+            stack = new Stack();
+            Label.LabelStyle labelStyle = new Label.LabelStyle();
+            labelStyle.font = assetManager.get(AssetDescriptors.TITLE_FONT);
+            labelStyle.font = assetManager.get(AssetDescriptors.GAMEOVER);
+            for(int i = 0;i < kickOffTime;i++){
+                Label l = new Label(String.valueOf(i+1),labelStyle);
+                l.setVisible(false);
+                kickOffImage.add(l);
+                stack.add(l);
+
+            }
+            kickOffImage.get(2).setVisible(true);
+            Actor foundActor = UIstage.getRoot().findActor("stack");
+                Table parentTable = (Table) foundActor.getParent();
+                parentTable.debugAll();
+            Cell cell = parentTable.getCell(foundActor);
+
+            cell.setActor(stack).padLeft(20).center();
+
+            cell.size(20, 20);
+            stack.setVisible(true);
+
+            cell.align(Align.center);
+
+        }
+        if(state != GameState.BEGIN  & state != GameState.PAUSED){
+            update(delta);
+            renderer.render(world,viewport.getCamera().combined);
+        }
+
 
         UIstage.act(delta);
         UIstage.draw();
@@ -581,7 +640,12 @@ public class GameScreen extends ScreenAdapter {
                 elapsedTime--;
                 elapsedTime = Math.max(0,elapsedTime);
                 // Update the displayed time
-                timeValueLabel.setText(String.valueOf(elapsedTime));
+                int minutes = elapsedTime / 60;
+                int seconds = elapsedTime % 60;
+
+// Format the time as mm:ss
+                String timeFormatted = String.format("%02d:%02d", minutes, seconds);
+                timeValueLabel.setText(String.valueOf(timeFormatted));
             } else {
                 kickOffTime--;
 

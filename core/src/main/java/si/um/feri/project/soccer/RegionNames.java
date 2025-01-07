@@ -18,10 +18,10 @@ public class RegionNames {
         public static final String SHOE5 = "shoe5";
 
         public static final String HEAD6 = "head6";
-        public static final String SHOE6 = "shoe6";
+        public static final String PAUSE = "pause";
 
-        public static final String HEAD7 = "head7";
-        public static final String SHOE7 = "shoe7";
+        public static final String MULTIINTRO = "multiplayerIntro";
+        public static final String SINGLEINTRO = "singleplayerIntro";
 
         public static final String OFF = "off";
         public static final String ON = "on";
