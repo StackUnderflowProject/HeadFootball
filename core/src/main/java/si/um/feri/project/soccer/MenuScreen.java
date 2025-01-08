@@ -182,6 +182,9 @@ font.getData().setScale(0.7f);
                 stage.addAction(Actions.sequence(Actions.fadeOut(0.1f),Actions.run(new Runnable() {
                     @Override
                     public void run() {
+                        float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
+                        SoundManager.coin.play(0.5f,randomPitch,0f);
                         game.setScreen(new GameScreen(game,team1,team2,Mode.SINGLEPLAYER));
                     }
                 })));
@@ -211,6 +214,9 @@ font.getData().setScale(0.7f);
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new GameScreen(game,team1,team2,Mode.LOCALMULTIPLAYER));
+                float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
+                SoundManager.coin.play(0.5f,randomPitch,0f);
             }
 
             @Override

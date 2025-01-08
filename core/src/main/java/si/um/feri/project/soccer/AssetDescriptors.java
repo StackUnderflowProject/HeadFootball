@@ -1,6 +1,7 @@
 package si.um.feri.project.soccer;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -28,6 +29,15 @@ public class AssetDescriptors {
         new AssetDescriptor<>(AssetsPaths.FONT2,BitmapFont.class);
     public static final AssetDescriptor<Skin> UI_SKIN = new AssetDescriptor<>(AssetsPaths.SKIN,Skin.class);
     public static final AssetDescriptor<Music> LOOP = new AssetDescriptor<>(AssetsPaths.MUSIC,Music.class);
+    public static final AssetDescriptor<Sound> WHISTLE = new AssetDescriptor<>(AssetsPaths.WHISTLE, Sound.class);
+    public static final AssetDescriptor<Sound> POP = new AssetDescriptor<>(AssetsPaths.POP, Sound.class);
+
+    public static final AssetDescriptor<Sound> JUMP = new AssetDescriptor<>(AssetsPaths.JUMP, Sound.class);
+    public static final AssetDescriptor<Sound> CHEER = new AssetDescriptor<>(AssetsPaths.CHEER, Sound.class);
+    public static final AssetDescriptor<Sound> COIN = new AssetDescriptor<>(AssetsPaths.COIN, Sound.class);
+
+
+
 
     private AssetDescriptors() {
     }
