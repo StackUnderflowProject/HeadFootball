@@ -65,7 +65,7 @@ public class Ball extends Sprite {
         fixtureDef.shape = circle;
         fixtureDef.filter.categoryBits = Bits.BALL_BIT;
         fixtureDef.filter.maskBits = Bits.GROUND_BIT | Bits.GOALSENSOR_BIT | Bits.PLAYER_BIT |Bits.POWERUP_BIT;
-        fixtureDef.density = 0.5f;
+        fixtureDef.density = 0.1f;
         fixtureDef.friction = 0.5f;
         body.setLinearDamping(0.4f);  // Apply linear damping to slow down the ball over time
 

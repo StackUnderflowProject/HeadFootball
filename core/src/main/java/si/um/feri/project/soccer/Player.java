@@ -1,5 +1,10 @@
 package si.um.feri.project.soccer;
 
+import static si.um.feri.project.soccer.GameConfig.JUMP_IMPULSE;
+import static si.um.feri.project.soccer.GameConfig.MAX_SPEED;
+import static si.um.feri.project.soccer.GameConfig.MAX_SPEED_IN_AIR;
+import static si.um.feri.project.soccer.GameConfig.MOVE_IMPULSE;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -12,7 +17,6 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 
 public class Player extends Sprite {
-    static public float MAX_SPEED = 20f;
 
     public boolean isFrozen() {
         return isFrozen;
@@ -94,7 +98,7 @@ public class Player extends Sprite {
         FixtureDef headFixture = new FixtureDef();
         headFixture.shape = headShape;
         headFixture.density = 1f;
-        headFixture.friction = 3f;
+        headFixture.friction = 2f;
         headFixture.filter.categoryBits = Bits.PLAYER_BIT;
         headFixture.filter.maskBits = Bits.GROUND_BIT | Bits.BALL_BIT | Bits.PLAYER_BIT;
         headBody.createFixture(headFixture);  // Attach fixture to the head body
@@ -120,24 +124,23 @@ public class Player extends Sprite {
     }
 
     public void handleInput(float de) {
-
+        final float MAX_SPEED = (grounded) ? GameConfig.MAX_SPEED : MAX_SPEED_IN_AIR;
         if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(-MAX_SPEED, 0),headBody.getWorldCenter(), true);  // Move left
+            headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0),headBody.getWorldCenter(), true);  // Move left
         }
         if (Gdx.input.isKeyPressed(rightKey) && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(MAX_SPEED, 0),headBody.getWorldCenter(), true);  // Move right
+            headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0),headBody.getWorldCenter(), true);  // Move right
         }
         if (Gdx.input.isKeyJustPressed(jumpKey) && grounded ) {
-            headBody.applyLinearImpulse(new Vector2(0, 200), headBody.getWorldCenter(),true);  // Move up
+            headBody.applyLinearImpulse(new Vector2(0, JUMP_IMPULSE), headBody.getWorldCenter(),true);  // Move up
+            float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+            SoundManager.jump.play(1.0f, randomPitch, 0.0f);
             grounded = false;
         }
     }
     public void handleAiMovement(float deltaTime, Vector2 targetPosition) {
         // Define maximum speed and impulse values for AI
-        final float MAX_SPEED = 5f;
-        final float MOVE_IMPULSE = 20f;
-        final float JUMP_IMPULSE = 200f;
-        final float desiredDistance = 10f;
+
         // Get the AI's position
         Vector2 aiPosition = headBody.getPosition();
 
@@ -145,7 +148,7 @@ public class Player extends Sprite {
         float distanceToTarget = aiPosition.dst(targetPosition);
 
         // Check if the AI needs to move closer or farther
-        if (distanceToTarget > desiredDistance) {
+        if (distanceToTarget > GameConfig.AI_DESIRED_DISTANCE) {
             // Move closer to the target
             if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
                 // Move left
@@ -154,7 +157,7 @@ public class Player extends Sprite {
                 // Move right
                 headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
             }
-        } else if (distanceToTarget < desiredDistance * 0.8f) {
+        } else if (distanceToTarget < GameConfig.AI_DESIRED_DISTANCE * 0.8f) {
             // Move farther away from the target (adds a buffer zone to prevent oscillation)
             if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
                 // Move right (away from target)
@@ -165,9 +168,10 @@ public class Player extends Sprite {
             }
         }
 
-        // Optional: Add jumping logic for obstacles or variety
         if (shouldJump() && grounded) {
             headBody.applyLinearImpulse(new Vector2(0, JUMP_IMPULSE), headBody.getWorldCenter(), true);
+            float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+            SoundManager.jump.play(1.0f, randomPitch, 0.0f);
             grounded = false;
         }
     }

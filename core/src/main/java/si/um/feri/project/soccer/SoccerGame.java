@@ -5,6 +5,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
@@ -44,8 +45,15 @@ music.setVolume(GamePreferences.loadMusicVolume());    }
         assetManager.load(AssetDescriptors.INFO);
         assetManager.load(AssetDescriptors.INFOGREEN);
 assetManager.load(AssetDescriptors.LOOP);
-        assetManager.finishLoading();
+assetManager.load(AssetDescriptors.WHISTLE);
+        assetManager.load(AssetDescriptors.JUMP);
+        assetManager.load(AssetDescriptors.POP);
+        assetManager.load(AssetDescriptors.CHEER);
+        assetManager.load(AssetDescriptors.COIN);
 
+
+        assetManager.finishLoading();
+        SoundManager.init(assetManager);
         assetManager.getLogger().setLevel(Logger.ERROR);
         TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
         music = assetManager.get(AssetDescriptors.LOOP);

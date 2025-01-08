@@ -1,10 +1,14 @@
 package si.um.feri.project.soccer;
 
+import static si.um.feri.project.soccer.SoundManager.cheer;
+import static si.um.feri.project.soccer.SoundManager.pop;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -65,7 +69,6 @@ public class GameScreen extends ScreenAdapter {
     private int elapsedTime;
     private Float accumulator;
     private Stack stack;
-
     private Goal Goal1;
     private Goal Goal2;
     private Player Player1;
@@ -395,11 +398,15 @@ public class GameScreen extends ScreenAdapter {
                     PowerUp pu = userDataB instanceof PowerUp ? ((PowerUp) userDataB) : ((PowerUp) userDataA);
                     pu.activate();
                     //PowerUpManager.move(pu);
+                    float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+                    pop.play(1.0f, randomPitch, 0.0f);
                     pu.setToDestroy(true);
                     break;
                 }
                 case Bits.GROUND_BIT | Bits.BALL_BIT :
                 {
+                    float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+                    pop.play(1.0f, randomPitch, 0.0f);
                     break;
                 }
                 case Bits.PLAYER_BIT | Bits.GROUND_BIT:
@@ -420,6 +427,8 @@ public class GameScreen extends ScreenAdapter {
                     else{
                         Player1.incScore();
                     }
+                    float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+                    cheer.play(1,randomPitch,0);
                     ballSprite.markReset = true;
                     Player1.markReset = true;
                     Player2.markReset = true;
@@ -659,6 +668,8 @@ public class GameScreen extends ScreenAdapter {
 
                 if (kickOffTime == -1) {
                     state = GameState.STARTED; // End the kickoflif phase
+                    assetManager.get(AssetDescriptors.WHISTLE).play(1);
+
                     //System.out.println(Player1.getScore() + " vs " + Player2.getScore());
                     kickOffImage.get(0).setVisible(false); // Hide the last kickoff image
                 }
