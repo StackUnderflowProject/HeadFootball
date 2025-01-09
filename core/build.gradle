@@ -18,6 +18,8 @@ dependencies {
   api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"
   api "org.mini2Dx:universal-tween-engine:$universalTweenVersion"
 
+  implementation 'org.json:json:20231013'
+
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
