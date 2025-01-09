@@ -1005,6 +1005,27 @@ small
   orig: 80, 85
   offset: 0, 0
   index: -1
+speedBad
+  rotate: false
+  xy: 3328, 575
+  size: 9, 17
+  orig: 9, 17
+  offset: 0, 0
+  index: -1
+speedGood
+  rotate: false
+  xy: 3555, 802
+  size: 9, 17
+  orig: 9, 17
+  offset: 0, 0
+  index: -1
+speedNeutral
+  rotate: false
+  xy: 3313, 78
+  size: 9, 17
+  orig: 9, 17
+  offset: 0, 0
+  index: -1
 stadium
   rotate: false
   xy: 2, 920

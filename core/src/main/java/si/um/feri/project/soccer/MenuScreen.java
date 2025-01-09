@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
@@ -38,6 +39,9 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.github.tommyettinger.textra.Font;
+import com.github.tommyettinger.textra.KnownFonts;
+import com.github.tommyettinger.textra.TextraLabel;
 
 
 public class MenuScreen extends ScreenAdapter {
@@ -52,21 +56,26 @@ public class MenuScreen extends ScreenAdapter {
     private Label label;
     private Team team1,team2;
     private Mode mode;
+    private ParticleEffect particleEffect1 = new ParticleEffect();
+    private ParticleEffect particleEffect2= new ParticleEffect();
+
 
     public MenuScreen(SoccerGame game,Team team1,Team team2,Mode mode) {
         this.game = game;
         viewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
 
         stage = new Stage(viewport, game.getBatch());
-
+        this.particleEffect1.load(Gdx.files.internal("jump.p"),Gdx.files.internal("") // Directory containing particle textures
+        );
+        this.particleEffect2.load(Gdx.files.internal("jump.p"),Gdx.files.internal("")); // Directory containing particle textures
+        particleEffect2.scaleEffect(3f);
+        particleEffect1.scaleEffect(3f);
         this.team1 = team1;
         this.team2 = team2;
         this.mode = mode;
         assetManager = game.getAssetManager();
         gameplayAtlas = assetManager.get(AssetDescriptors.GAMEPLAY);
-        stage.addAction(Actions.sequence(Actions.alpha(0.5f),Actions.fadeIn(0.2f)));
 
-        stage.addActor(new Image(gameplayAtlas.findRegion(RegionNames.Textures.FIELD)));
 
 
     }
@@ -75,6 +84,9 @@ public class MenuScreen extends ScreenAdapter {
     public void show() {
 
         skin = assetManager.get(AssetDescriptors.UI_SKIN);
+        stage.addAction(Actions.sequence(Actions.alpha(0.5f),Actions.fadeIn(0.2f)));
+
+        stage.addActor(new Image(gameplayAtlas.findRegion(RegionNames.Textures.FIELD)));
         ImageButton.ImageButtonStyle musicButtonStyle = new ImageButton.ImageButtonStyle();
 
         musicButtonStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.ON)); // Music on texture
@@ -111,8 +123,8 @@ public class MenuScreen extends ScreenAdapter {
         stage.addActor(layoutTable);
         stage.addActor(createUi());
 
-        stage.addActor(createAnimatedBall(new Vector2(viewport.getWorldWidth() /6f, viewport.getWorldHeight() / 5.7f),200f));
-        stage.addActor(createAnimatedBall(new Vector2(viewport.getWorldWidth() - viewport.getWorldWidth() /6f, viewport.getWorldHeight() / 5.7f),200f)); // Add the animated ball to the stage
+        stage.addActor(createAnimatedBall(new Vector2(viewport.getWorldWidth() /6f, viewport.getWorldHeight() / 5.7f),200f,particleEffect1));
+        stage.addActor(createAnimatedBall(new Vector2(viewport.getWorldWidth() - viewport.getWorldWidth() /6f, viewport.getWorldHeight() / 5.7f),200f,particleEffect2)); // Add the animated ball to the stage
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -121,7 +133,7 @@ public class MenuScreen extends ScreenAdapter {
     public void resize(int width, int height) {
         viewport.update(width, height, true);
     }
-    private Actor createAnimatedBall(Vector2 pos,float amount) {
+    private Actor createAnimatedBall(Vector2 pos,float amount,ParticleEffect particleEffect) {
         // Load the ball texture region
         TextureRegion ballRegion = gameplayAtlas.findRegion(RegionNames.Textures.BALL1);
         Image ball = new Image(new TextureRegionDrawable(ballRegion));
@@ -129,13 +141,22 @@ public class MenuScreen extends ScreenAdapter {
         // Set the initial position and size of the ball
         ball.setSize(20, 20); // Set size (adjust as needed)
         ball.setPosition(pos.x,pos.y); // Start position
-
+        particleEffect.setPosition(pos.x+10, pos.y);
         // Create the up and down movement animation
         ball.addAction(Actions.forever(
             Actions.sequence(
 
                 Actions.moveBy(0, amount,2, Interpolation.sineOut),
-                Actions.moveBy(0, -amount, 2,Interpolation.sineIn) // Move down by 100 units in 1 second
+                Actions.moveBy(0, -amount, 2,Interpolation.sineIn), // Move down by 100 units in 1 second
+                Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        SoundManager.pop.play(1f);
+                        particleEffect.start();
+
+
+                    }
+                })
             )
         ));
 
@@ -147,6 +168,15 @@ public class MenuScreen extends ScreenAdapter {
 
         stage.act(delta);
         stage.draw();
+        if (!particleEffect1.isComplete()) {
+            System.out.println("draw");
+            particleEffect1.update(delta);
+            particleEffect2.update(delta);
+            stage.getBatch().begin();
+            particleEffect1.draw(stage.getBatch());
+            particleEffect2.draw(stage.getBatch());
+            stage.getBatch().end();
+        }
     }
 
     @Override
@@ -171,7 +201,6 @@ font.getData().setScale(0.7f);
         singleplayerStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.SINGLEPLAYER)); // Normal state
         singleplayerStyle.down = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.SINGLEPLAYER)); // Pressed state
         singleplayerStyle.over = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.SINGLEPLAYER)); // Hover state (optional)
-
 // Create the Singleplayer TextButton
         TextButton singleplayer = new TextButton("Singleplayer", singleplayerStyle);
 
@@ -179,13 +208,15 @@ font.getData().setScale(0.7f);
         singleplayer.addListener(new ClickListener(){
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                stage.addAction(Actions.sequence(Actions.fadeOut(0.1f),Actions.run(new Runnable() {
+                float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
+                SoundManager.coin.play(0.5f,randomPitch,0f);
+
+                stage.addAction(Actions.sequence(Actions.fadeOut(0.2f),Actions.run(new Runnable() {
                     @Override
                     public void run() {
-                        float randomPitch = 0.8f + (float) Math.random() * 0.4f;
 
-                        SoundManager.coin.play(0.5f,randomPitch,0f);
-                        game.setScreen(new GameScreen(game,team1,team2,Mode.SINGLEPLAYER));
+                        game.setScreen(new SelectionScreen(game,team1,team2,Mode.SINGLEPLAYER));
                     }
                 })));
             }
@@ -213,7 +244,7 @@ font.getData().setScale(0.7f);
         multiplayer.addListener(new ClickListener(){
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new GameScreen(game,team1,team2,Mode.LOCALMULTIPLAYER));
+                game.setScreen(new SelectionScreen(game,team1,team2,Mode.LOCALMULTIPLAYER));
                 float randomPitch = 0.8f + (float) Math.random() * 0.4f;
 
                 SoundManager.coin.play(0.5f,randomPitch,0f);
@@ -231,6 +262,30 @@ font.getData().setScale(0.7f);
             }
         });
         multiplayer.pad(0,10,0,10);
+        TextButton instructions = new TextButton("Instructions", singleplayerStyle);
+        instructions.setTransform(true); // Enable transformations like scaling
+        instructions.setOrigin(Align.center);
+        instructions.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                //game.setScreen(new InstructionsScreen(game));
+                float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
+                SoundManager.coin.play(0.5f,randomPitch,0f);
+            }
+
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                instructions.addAction(Actions.scaleTo(1.1f, 1.1f, 0.1f)); // Scale up to 120% over 0.1 seconds
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                instructions.addAction(Actions.scaleTo(1f, 1f, 0.1f)); // Scale up to 120% over 0.1 seconds
+
+            }
+        });
+        multiplayer.pad(0,10,0,10);
         Table buttonTable = new Table();
         buttonTable.setFillParent(true); // Ensure the table takes up the entire stage
         Label.LabelStyle style = new Label.LabelStyle(assetManager.get(AssetDescriptors.GAMEOVER), Color.WHITE);
@@ -242,11 +297,13 @@ font.getData().setScale(0.7f);
 
 
 
+
         // Add buttons to the table
         buttonTable.defaults().pad(10); // Add padding between buttons
         buttonTable.add(nameLabel).center().row();
         buttonTable.add(singleplayer).center().row();
         buttonTable.add(multiplayer).center().row();
+        buttonTable.add(instructions).center().row();
 
 
         return buttonTable;
