@@ -33,4 +33,17 @@ public class PlayerManager {
             player2.setFrozen(false);
         }
     }
+    static  void  setMultiplier(ID id,PowerUpType type){
+        if(id == ID.LEFT){
+            player1.setSpeedMultiplier((type == PowerUpType.GOOD ? GameConfig.GOOD_MULTI : GameConfig.BAD_MULTI));
+        }
+        else {
+            player2.setSpeedMultiplier((type == PowerUpType.GOOD ? GameConfig.GOOD_MULTI : GameConfig.BAD_MULTI));
+
+        }
+    }
+    static  void  unsetMultiplier(){
+        player1.setSpeedMultiplier(1);
+        player2.setSpeedMultiplier(1);
+    }
 }

@@ -1,13 +1,16 @@
 package si.um.feri.project.soccer;
 
+import static com.badlogic.gdx.math.MathUtils.random;
 import static si.um.feri.project.soccer.GameConfig.JUMP_IMPULSE;
 import static si.um.feri.project.soccer.GameConfig.MAX_SPEED;
 import static si.um.feri.project.soccer.GameConfig.MAX_SPEED_IN_AIR;
 import static si.um.feri.project.soccer.GameConfig.MOVE_IMPULSE;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -15,6 +18,8 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+
+import java.util.Random;
 
 public class Player extends Sprite {
 
@@ -51,9 +56,16 @@ public class Player extends Sprite {
     private Vector2 resetState;
     public Boolean markReset = false;
     public ID id;
+    private boolean isFacingLeft = false;
+    private boolean lastFacingLeft = false; // Initially facing right
+
     private int leftKey;
     private int rightKey;
     private int jumpKey;
+     private Random random = new Random();
+     private ParticleEffect particleEffect = new ParticleEffect();
+    private float speedMultiplier = 1;
+    private TextureAtlas atlas= SoccerGame.assetManager.get(AssetDescriptors.GAMEPLAY) ;
 
 
 
@@ -61,6 +73,9 @@ public class Player extends Sprite {
         setRegion(region);
         this.id = id;
         this.ice = ice;
+        this.particleEffect.load(Gdx.files.internal("jump.p"),Gdx.files.internal("") // Directory containing particle textures
+        );
+        particleEffect.scaleEffect(0.2f);
         setSize(width, height);
         setPosition(pos.x, pos.y + height /2);
         createHead(world, width, height, pos);  // Create the head body
@@ -124,18 +139,21 @@ public class Player extends Sprite {
     }
 
     public void handleInput(float de) {
-        final float MAX_SPEED = (grounded) ? GameConfig.MAX_SPEED : MAX_SPEED_IN_AIR;
+        float MAX_SPEED = (grounded) ? GameConfig.MAX_SPEED : MAX_SPEED_IN_AIR;
+        MAX_SPEED *= speedMultiplier;
         if (Gdx.input.isKeyPressed(leftKey) && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0),headBody.getWorldCenter(), true);  // Move left
+            headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE * speedMultiplier, 0),headBody.getWorldCenter(), true);  // Move left
         }
         if (Gdx.input.isKeyPressed(rightKey) && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
-            headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0),headBody.getWorldCenter(), true);  // Move right
+            headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE * speedMultiplier, 0),headBody.getWorldCenter(), true);  // Move right
         }
         if (Gdx.input.isKeyJustPressed(jumpKey) && grounded ) {
             headBody.applyLinearImpulse(new Vector2(0, JUMP_IMPULSE), headBody.getWorldCenter(),true);  // Move up
             float randomPitch = 0.8f + (float) Math.random() * 0.4f;
             SoundManager.jump.play(1.0f, randomPitch, 0.0f);
             grounded = false;
+            particleEffect.setPosition(getX() + getWidth() / 2, getY()); // Set position to match player's current position
+            particleEffect.start();
         }
     }
     public void handleAiMovement(float deltaTime, Vector2 targetPosition) {
@@ -146,9 +164,8 @@ public class Player extends Sprite {
 
         // Calculate the distance between AI and the target
         float distanceToTarget = aiPosition.dst(targetPosition);
-
         // Check if the AI needs to move closer or farther
-        if (distanceToTarget > GameConfig.AI_DESIRED_DISTANCE) {
+        if (distanceToTarget > GameConfig.AI_DESIRED_DISTANCE  || (aiPosition.x > GameConfig.WORLD_WIDTH - GameConfig.GOALWIDTH *2)) {
             // Move closer to the target
             if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x > -MAX_SPEED && !isFrozen) {
                 // Move left
@@ -157,7 +174,7 @@ public class Player extends Sprite {
                 // Move right
                 headBody.applyLinearImpulse(new Vector2(MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
             }
-        } else if (distanceToTarget < GameConfig.AI_DESIRED_DISTANCE * 0.8f) {
+        } else if (distanceToTarget < GameConfig.AI_DESIRED_DISTANCE * 0.8f && (aiPosition.x < GameConfig.WORLD_WIDTH - GameConfig.GOALWIDTH *2 && aiPosition.x >  GameConfig.GOALWIDTH *2)) {
             // Move farther away from the target (adds a buffer zone to prevent oscillation)
             if (targetPosition.x < aiPosition.x && headBody.getLinearVelocity().x < MAX_SPEED && !isFrozen) {
                 // Move right (away from target)
@@ -167,10 +184,12 @@ public class Player extends Sprite {
                 headBody.applyLinearImpulse(new Vector2(-MOVE_IMPULSE, 0), headBody.getWorldCenter(), true);
             }
         }
+        System.out.println("Jump count: " + shouldJump()); // Should be ~10% of 1000
 
         if (shouldJump() && grounded) {
             headBody.applyLinearImpulse(new Vector2(0, JUMP_IMPULSE), headBody.getWorldCenter(), true);
             float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
             SoundManager.jump.play(1.0f, randomPitch, 0.0f);
             grounded = false;
         }
@@ -179,7 +198,9 @@ public class Player extends Sprite {
     // Simple condition to decide if the AI should jump
     private boolean shouldJump() {
         // Example: Jump with a 10% chance per frame, or add your custom condition
-        return Math.random() < 0.1;
+        double randomDouble = random.nextDouble(); // 0.0 to 1.0
+
+        return randomDouble > 0.999d;
     }
 
 
@@ -193,13 +214,26 @@ public class Player extends Sprite {
 
         float iconX = getX()+width/4;
         float iconY = getY();
-        super.draw(batch);  // Draw the player sprite
+        /*if (isFacingLeft && !isFlipX()) {
+            flip(true, false); // Flip horizontally
+        } else if (!isFacingLeft && isFlipX()) {
+            flip(true, false); // Reset to not flipped
+        }     */   super.draw(batch);  // Draw the player sprite
         batch.setColor(1f, 1f, 1f, 0.8f); // Set the batch color with alpha
+        // Update and draw the particle effect
+        if (!particleEffect.isComplete()) { // Check if the effect is still playing
+            particleEffect.setPosition(getX() + getWidth() / 2, getY());
+            particleEffect.update(Gdx.graphics.getDeltaTime());
+            particleEffect.draw(batch);
+        }
 
         if(isFrozen)batch.draw(ice, iconX, iconY, width, heght);
         batch.setColor(1f, 1f, 1f, 1); // Set the batch color with alpha
-
-
+        batch.draw(atlas.findRegion(
+            (speedMultiplier == 1) ? RegionNames.Textures.SPEEDNEUTRAL :
+                (speedMultiplier > 1) ? RegionNames.Textures.SPEEDGOOD :
+                    RegionNames.Textures.SPEEDBAD
+        ),getX() + getWidth() /2 ,getY() + getHeight() / 2,getWidth() * 0.2f,getHeight()*0.2f);
         // The head is part of the physics world, so no need to manually draw it
     }
 
@@ -208,6 +242,22 @@ public class Player extends Sprite {
         Vector2 position = headBody.getPosition();
         setPosition(position.x - getWidth() / 2 , position.y - getHeight() / 2);
         setRotation((float) Math.toDegrees(headBody.getAngle()));
-  }
+        if (headBody.getLinearVelocity().x < 0) {
+            isFacingLeft = true;
+            lastFacingLeft = true;
+        } else if (headBody.getLinearVelocity().x > 0) {
+            isFacingLeft = false;
+            lastFacingLeft = false;
+        } else {
+            // No horizontal movement; retain the last direction
+            isFacingLeft = lastFacingLeft;
+        }  }
 
+    public float getSpeedMultiplier() {
+        return speedMultiplier;
+    }
+
+    public void setSpeedMultiplier(float speedMultiplier) {
+        this.speedMultiplier = speedMultiplier;
+    }
 }
