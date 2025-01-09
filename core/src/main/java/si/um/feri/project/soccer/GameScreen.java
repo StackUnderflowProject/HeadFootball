@@ -1,6 +1,7 @@
 package si.um.feri.project.soccer;
 
 import static si.um.feri.project.soccer.SoundManager.cheer;
+import static si.um.feri.project.soccer.SoundManager.coin;
 import static si.um.feri.project.soccer.SoundManager.pop;
 
 import com.badlogic.gdx.Gdx;
@@ -399,7 +400,7 @@ public class GameScreen extends ScreenAdapter {
                     pu.activate();
                     //PowerUpManager.move(pu);
                     float randomPitch = 0.8f + (float) Math.random() * 0.4f;
-                    pop.play(1.0f, randomPitch, 0.0f);
+                    coin.play(1.0f, randomPitch, 0.0f);
                     pu.setToDestroy(true);
                     break;
                 }

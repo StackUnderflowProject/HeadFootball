@@ -14,10 +14,10 @@ public class RegionNames {
         public static final String HEAD4 = "head4";
         public static final String SHOE4 = "shoe4";
 
-        public static final String HEAD5 = "head5";
-        public static final String SHOE5 = "shoe5";
+        public static final String SPEEDNEUTRAL = "speedNeutral";
+        public static final String SPEEDBAD = "speedBad";
 
-        public static final String HEAD6 = "head6";
+        public static final String SPEEDGOOD = "speedGood";
         public static final String PAUSE = "pause";
 
         public static final String MULTIINTRO = "multiplayerIntro";

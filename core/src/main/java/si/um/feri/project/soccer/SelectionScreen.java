@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -53,6 +54,7 @@ public class SelectionScreen extends ScreenAdapter {
         this.team2 = team2;
         this.mode = mode;
         stage = new Stage(viewport, game.getBatch());
+        stage.addAction(Actions.fadeIn(0.5f));
         assetManager = game.getAssetManager();
 
         TextureAtlas atlas = assetManager.get(AssetDescriptors.GAMEPLAY);
@@ -89,11 +91,10 @@ public class SelectionScreen extends ScreenAdapter {
 
         rootTable.add(team1Table).minWidth(160).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
         rootTable.add(team2Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
-        // Add Player Icons under the Team Tables
         rootTable.row(); // Move to the next row for player icons
 
-        playerIconsTable.add(player2).pad(10);
         playerIconsTable.add(player1).pad(10);
+        playerIconsTable.add(player2).pad(10);
 
         rootTable.add(playerIconsTable).minSize(70).colspan(2).center().padTop(10).row(); // Align icons below both team tables
         TextButton confirmButton = new TextButton("Confirm Selection", skin);
@@ -178,8 +179,8 @@ public class SelectionScreen extends ScreenAdapter {
         private final Table player1,player2;
         private int player1Team,inital;
         public PlayerInputProcessor1(Table player,Table player2, int leftKey, int rightKey, Table team1, Table team2, Table playerTable,int pl) {
-            this.player1 = player;
-            this.player2 = player2;
+            this.player1 = player2;
+            this.player2 = player1;
             this.leftKey = leftKey;
             this.rightKey = rightKey;
             this.team1 = team1;
@@ -225,7 +226,7 @@ public class SelectionScreen extends ScreenAdapter {
                             Cell cell = team1.getCells().get(team1.getCells().size-1);
                             cell.setActor(player1);
                             selectedTeam = team1;
-                            player1Team = 2;
+                            player1Team = 1;
                         }
 
                     }
@@ -263,7 +264,7 @@ public class SelectionScreen extends ScreenAdapter {
                             Cell cell = team2.getCells().get(team2.getCells().size-1);
                             cell.setActor(player1).expand().fill();
                             selectedTeam = team2;
-                            player1Team = 1;
+                            player1Team = 2;
                         }
                     }
 
@@ -298,8 +299,8 @@ public class SelectionScreen extends ScreenAdapter {
         private int pl = 1;
 
         public PlayerInputProcessorCpu(Table player,Table player2, int leftKey, int rightKey, Table team1, Table team2, Table playerTable) {
-            this.player1 = player;
-            this.player2 = player2;
+            this.player1 = player2;
+            this.player2 = player;
             this.leftKey = leftKey;
             this.rightKey = rightKey;
             this.team1 = team1;
@@ -316,7 +317,7 @@ public class SelectionScreen extends ScreenAdapter {
                 cell.setActor(player2);
                 Cell cell2 = team2.getCells().get(team2.getCells().size - 1);
                 cell2.setActor(player1);
-                pl = 2;
+                pl = 1;
             }
 
             if (keycode == rightKey) {
@@ -326,7 +327,7 @@ public class SelectionScreen extends ScreenAdapter {
                 cell.setActor(player1);
                 Cell cell2 = team2.getCells().get(team2.getCells().size - 1);
                 cell2.setActor(player2);
-                pl = 1;
+                pl = 2;
             }
             return false;
         }

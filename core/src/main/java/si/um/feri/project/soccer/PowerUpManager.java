@@ -30,7 +30,6 @@ public  class PowerUpManager {
         viewport1 = viewport;
         atlas1 = atlas;
         world1 = world;
-        active.add(new BallPowerUp(PowerUpEffectType.BALLDULL,atlas,new Vector2(viewport.getWorldWidth() / 2 ,viewport.getWorldHeight() / 2),world));
 
     }
     private static void spawn(){
@@ -62,6 +61,10 @@ public  class PowerUpManager {
                 break;
             case ICE:
                 active.add(new IcePowerUp(randomType,randomEffect,atlas1,new Vector2(randomX,randomY),world1));
+                break;
+            case SPEED:
+                active.add(new SpeedPowerUp((randomType == PowerUpType.NEUTRAL) ? PowerUpType.GOOD : randomType,PowerUpEffectType.SPEED,atlas1,new Vector2(randomX,randomY),world1));
+                break;
         }
 
     }

@@ -19,6 +19,9 @@ public class GameConfig {
     public static final float MOVE_IMPULSE = 20f;
     public static final float JUMP_IMPULSE = 200f;
     public static final float AI_DESIRED_DISTANCE = 10f;
+    public static final float GOOD_MULTI = 1.4f;
+    public static final float BAD_MULTI = 0.6f;
+    public static final float NEUTRAL_MULTI = 1f;
 
     private GameConfig() {
     }
