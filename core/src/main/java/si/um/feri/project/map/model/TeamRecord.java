@@ -1,14 +1,14 @@
-package si.um.feri.project.map;
+package si.um.feri.project.map.model;
 
-public class Team {
+public class TeamRecord {
     public String _id;
     public String name;
     public String logoPath;
 
-    public Team() {
+    public TeamRecord() {
     }
 
-    public Team(String _id, String name, String logoPath) {
+    public TeamRecord(String _id, String name, String logoPath) {
         this._id = _id;
         this.name = name;
         this.logoPath = logoPath;

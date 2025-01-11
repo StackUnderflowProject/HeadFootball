@@ -23,6 +23,11 @@ public class GameConfig {
     public static final float BAD_MULTI = 0.6f;
     public static final float NEUTRAL_MULTI = 1f;
 
+    public static final float STADUIM_SIZE = 48;
+    public static final int DETAILS_WINDOW_WIDTH = 640;
+    public static final int DETAILS_WINDOW_HEIGHT = 480;
+    public static final int TEAM_LOGO_SIZE = 128;
+
     private GameConfig() {
     }
 }

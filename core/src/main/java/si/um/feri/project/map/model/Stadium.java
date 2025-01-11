@@ -1,4 +1,4 @@
-package si.um.feri.project.map;
+package si.um.feri.project.map.model;
 
 import si.um.feri.project.map.utils.Geolocation;
 

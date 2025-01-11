@@ -1,19 +1,17 @@
-package si.um.feri.project.map;
+package si.um.feri.project.soccer;
 
-import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.maps.MapLayer;
@@ -26,17 +24,30 @@ import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.StreamUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import si.um.feri.project.map.model.Event;
+import si.um.feri.project.map.model.Stadium;
+import si.um.feri.project.map.model.TeamRecord;
 import si.um.feri.project.map.utils.Constants;
 import si.um.feri.project.map.utils.Geolocation;
 import si.um.feri.project.map.utils.MapRasterTiles;
 import si.um.feri.project.map.utils.ZoomXY;
-import si.um.feri.project.soccer.SoccerGame;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,10 +60,10 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 
-public class Map extends ApplicationAdapter implements GestureDetector.GestureListener {
+public class MapScreen extends ScreenAdapter implements GestureDetector.GestureListener {
 
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
@@ -68,9 +79,13 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
     private ArrayList<Event> events;
     private Texture stadiumTexture;
     private Event selectedEvent = null;
-    private Vector2 cursorPosition;
 
-    private SoccerGame soccerGame;
+    private final SoccerGame soccerGame;
+
+    private Stage stage;
+    private Window eventDetailsWindow;
+    private Skin skin;
+    private Table eventDetailsTable;
 
     // Center geolocation
     private final Geolocation SLOVENIA_CENTER = new Geolocation(46.557314, 15.037771);
@@ -134,13 +149,13 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
             event.season = jsonObject.getInt("season");
 
             JSONObject homeTeam = jsonObject.getJSONObject("home");
-            event.home = new Team();
+            event.home = new TeamRecord();
             event.home._id = homeTeam.getString("_id");
             event.home.name = homeTeam.getString("name");
             event.home.logoPath = homeTeam.getString("logoPath");
 
             JSONObject awayTeam = jsonObject.getJSONObject("away");
-            event.away = new Team();
+            event.away = new TeamRecord();
             event.away._id = awayTeam.getString("_id");
             event.away.name = awayTeam.getString("name");
             event.away.logoPath = awayTeam.getString("logoPath");
@@ -164,8 +179,12 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
         return events;
     }
 
-    @Override
-    public void create() {
+    public MapScreen(SoccerGame soccerGame) {
+        this.soccerGame = soccerGame;
+        initialize();
+    }
+
+    public void initialize() {
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
 
@@ -177,25 +196,112 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
 
         touchPosition = new Vector3();
 
-        stadiumTexture = new Texture(Gdx.files.internal("map-marker.png"));
+        stadiumTexture = new Texture(Gdx.files.internal("stadiumMarker.png"));
 
         initializeMap(currentZoom);
-
-        GestureDetector gestureDetector = new GestureDetector(this);
-        Gdx.input.setInputProcessor(new InputMultiplexer(gestureDetector, new InputAdapter() {
-            @Override
-            public boolean scrolled(float amountX, float amountY) {
-                camera.zoom += amountY * zoomAdjustment; // Adjust zoom speed as needed
-                camera.zoom = MathUtils.clamp(camera.zoom, 0.01f, 1f); // Clamp zoom within limits
-                return true;
-            }
-        }));
 
         try {
             events = fetchEvents();
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
         }
+
+        stage = new Stage(new ScreenViewport());
+        skin = soccerGame.getAssetManager().get(AssetDescriptors.UI_SKIN);
+        createEventDetailsWindow();
+
+        // Update input processor to include stage
+        InputMultiplexer multiplexer = getInputMultiplexer();
+        Gdx.input.setInputProcessor(multiplexer);
+    }
+
+    private InputMultiplexer getInputMultiplexer() {
+        GestureDetector gestureDetector = new GestureDetector(this);
+        return new InputMultiplexer(
+            stage,
+            gestureDetector,
+            new InputAdapter() {
+                @Override
+                public boolean scrolled(float amountX, float amountY) {
+                    camera.zoom += amountY * zoomAdjustment;
+                    camera.zoom = MathUtils.clamp(camera.zoom, 0.01f, 1f);
+                    return true;
+                }
+            }
+        );
+    }
+
+    private void createEventDetailsWindow() {
+        eventDetailsWindow = new Window("Event Details", skin);
+        eventDetailsWindow.setVisible(false);
+        eventDetailsWindow.setMovable(false);
+        eventDetailsWindow.setModal(false);
+        eventDetailsWindow.setSize(GameConfig.DETAILS_WINDOW_WIDTH, GameConfig.DETAILS_WINDOW_HEIGHT);
+
+        eventDetailsTable = new Table(skin);
+        eventDetailsTable.align(Align.center);
+        eventDetailsWindow.add(eventDetailsTable).expand().fill();
+
+        stage.addActor(eventDetailsWindow);
+    }
+
+    private void updateEventDetails(Event event) {
+        if (event == null) {
+            eventDetailsWindow.setVisible(false);
+            return;
+        }
+
+        eventDetailsTable.clear();
+
+        // Add match date
+        String rawDate = event.date.toString();
+        String date = rawDate.substring(0, 10) + rawDate.substring(rawDate.length() - 5);
+        eventDetailsTable.add(new Label(date, skin, "title")).colspan(3).pad(10);
+        eventDetailsTable.row();
+
+        // Add team logos and names
+        Image homeLogo = new Image(Objects.requireNonNull(fetchTextureFromUrl(event.home.logoPath)));
+        Image awayLogo = new Image(Objects.requireNonNull(fetchTextureFromUrl(event.away.logoPath)));
+
+        Table teamsTable = new Table();
+        teamsTable.add(homeLogo).size(GameConfig.TEAM_LOGO_SIZE, GameConfig.TEAM_LOGO_SIZE).pad(10);
+        teamsTable.add(new Label(event.score, skin, "title")).pad(20);
+        teamsTable.add(awayLogo).size(GameConfig.TEAM_LOGO_SIZE, GameConfig.TEAM_LOGO_SIZE).pad(10);
+        eventDetailsTable.add(teamsTable).colspan(3).pad(10);
+        eventDetailsTable.row();
+
+        Table namesTable = new Table();
+        namesTable.add(new Label(event.home.name, skin, "title")).pad(10);
+        namesTable.add().width(100);
+        namesTable.add(new Label(event.away.name, skin, "title")).pad(10);
+        eventDetailsTable.add(namesTable).colspan(3).pad(10);
+        eventDetailsTable.row();
+
+        // Add play button
+        TextButton playButton = getPlayButton();
+        eventDetailsTable.add(playButton).colspan(3).pad(20);
+
+        // Position the window
+        eventDetailsWindow.setPosition(
+            Gdx.graphics.getWidth() / 2f - eventDetailsWindow.getWidth() / 2,
+            Gdx.graphics.getHeight() / 2f - eventDetailsWindow.getHeight() / 2
+        );
+        eventDetailsWindow.setVisible(true);
+    }
+
+    private TextButton getPlayButton() {
+        TextButton playButton = new TextButton("Play", skin, "round");
+        playButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                TextureAtlas atlas = soccerGame.getAssetManager().get(AssetDescriptors.GAMEPLAY);
+                soccerGame.setScreen(new MenuScreen(soccerGame,
+                    new Team(selectedEvent.home.name, atlas.findRegion(selectedEvent.home.name.split(" ")[0].toLowerCase()), atlas.findRegion(selectedEvent.home.name.split(" ")[0].toLowerCase() + "p")),
+                    new Team(selectedEvent.away.name, atlas.findRegion(selectedEvent.away.name.split(" ")[0].toLowerCase()), atlas.findRegion(selectedEvent.away.name.split(" ")[0].toLowerCase() + "p")),
+                    Mode.SINGLEPLAYER));
+            }
+        });
+        return playButton;
     }
 
     private void initializeMap(int zoom) {
@@ -245,7 +351,7 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
     }
 
     @Override
-    public void render() {
+    public void render(float delta) {
         ScreenUtils.clear(0, 0, 0, 1);
 
         handleInput();
@@ -256,7 +362,10 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
         tiledMapRenderer.render();
 
         drawMarkers();
-        drawEventDetails();
+
+        // Update and render stage
+        stage.act(delta);
+        stage.draw();
     }
 
     private void drawMarkers() {
@@ -270,7 +379,7 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
                 beginTile.x,
                 beginTile.y
             );
-            batch.draw(stadiumTexture, marker.x - 16, marker.y - 16, 32, 32);
+            batch.draw(stadiumTexture, marker.x - GameConfig.STADUIM_SIZE / 2, marker.y - GameConfig.STADUIM_SIZE / 2, GameConfig.STADUIM_SIZE, GameConfig.STADUIM_SIZE);
         }
         batch.end();
     }
@@ -278,9 +387,15 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
     @Override
     public void dispose() {
         shapeRenderer.dispose();
+        batch.dispose();
         for (Texture tile : mapTiles) {
             tile.dispose();
         }
+        if (stadiumTexture != null) {
+            stadiumTexture.dispose();
+        }
+        stage.dispose();
+        skin.dispose();
     }
 
     private void handleInput() {
@@ -335,78 +450,23 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
                 beginTile.y
             );
 
-            // Marker size and touch detection (32x32)
-            if (touchPosition.x >= markerPosition.x - 16 && touchPosition.x <= markerPosition.x + 16 &&
+            if (touchPosition.x >= markerPosition.x - 24 && touchPosition.x <= markerPosition.x + 24 &&
                 touchPosition.y >= markerPosition.y - 16 && touchPosition.y <= markerPosition.y + 16) {
                 selectedEvent = event;
-                cursorPosition = new Vector2(x, y);
+                updateEventDetails(event);
                 return true;
             }
         }
 
         // Deselect event if clicked elsewhere
         selectedEvent = null;
+        updateEventDetails(null);
         return false;
     }
 
-    public void drawEventDetails() {
-        if (selectedEvent == null) return;
-
-        float x = cursorPosition.x;
-        float y = cursorPosition.y + 200;
-
-        // Load a TTF font to avoid blurriness
-        FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/PixeloidSans-Bold.ttf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        fontParameter.size = 24;
-        fontParameter.color = Color.BLACK;
-        BitmapFont font = fontGenerator.generateFont(fontParameter);
-        fontGenerator.dispose();
-
-        // Load and cache team logos
-        HashMap<Object, Object> logoTextures = new HashMap<>();
-
-        logoTextures.putIfAbsent(selectedEvent.home.logoPath, fetchTextureFromUrl(selectedEvent.home.logoPath));
-        logoTextures.putIfAbsent(selectedEvent.away.logoPath, fetchTextureFromUrl(selectedEvent.away.logoPath));
-
-        Texture homeLogo = (Texture) logoTextures.get(selectedEvent.home.logoPath);
-        Texture awayLogo = (Texture) logoTextures.get(selectedEvent.away.logoPath);
-
-        // Draw the details box and content
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Draw the background rectangle
-        shapeRenderer.setColor(new Color(0.3f, 0.5f, 1f, 0.6f));
-        shapeRenderer.rect(x - 60, y - 200, 700, 460);
-        shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(x+180, y-180, 140, 60);
-        shapeRenderer.end();
-
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-
-        int logoSize = 128;
-        // Draw the team logos
-        if (homeLogo != null) {
-            batch.draw(homeLogo, x, y, logoSize, logoSize);
-        }
-        if (awayLogo != null) {
-            batch.draw(awayLogo, x + 400, y, logoSize, logoSize);
-        }
-
-        // Draw the text
-        String rawDate = selectedEvent.date.toString();
-        String date = rawDate.substring(0, 10) + rawDate.substring(rawDate.length() - 5);
-        font.draw(batch, selectedEvent.home.name, x + (selectedEvent.home.name.length() > 10 ? -40 : 0), y - 50);
-        font.draw(batch, selectedEvent.away.name, x + 350 + (selectedEvent.away.name.length() > 10 ? -40 : selectedEvent.away.name.length() < 6 ? 80 : 40), y - 50);
-        font.getData().setScale(1.5f);
-        font.draw(batch, date, x + 80, y + 220);
-        font.draw(batch, selectedEvent.score, x + 220, y + 80);
-        font.draw(batch, "Play", x+200, y-140);
-        font.getData().setScale(1f);
-
-        batch.end();
+    @Override
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
     }
 
     private Texture fetchTextureFromUrl(String urlString) {
@@ -423,7 +483,7 @@ public class Map extends ApplicationAdapter implements GestureDetector.GestureLi
             // Create a Texture from the byte array
             return new Texture(new Pixmap(bytes, 0, bytes.length));
         } catch (Exception e) {
-            e.printStackTrace();
+            Gdx.app.log("Team Image", "Failed to fetch image: " + e.getMessage());
             return null;
         } finally {
             StreamUtils.closeQuietly(input);
