@@ -6,16 +6,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Logger;
 
-import java.util.LinkedHashMap;
-
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+/**
+ * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
+ */
 public class SoccerGame extends Game {
     public AssetManager getAssetManager() {
         return assetManager;
@@ -45,13 +42,17 @@ public class SoccerGame extends Game {
         }
         super.setScreen(screen);
     }
+
     public SpriteBatch getBatch() {
         return batch;
     }
 
     private SpriteBatch batch;
-    static public void loadMusic(){
-music.setVolume(GamePreferences.loadMusicVolume());    }
+
+    static public void loadMusic() {
+        music.setVolume(GamePreferences.loadMusicVolume());
+    }
+
     @Override
     public void create() {
         Gdx.app.setLogLevel(Application.LOG_ERROR);
@@ -65,8 +66,8 @@ music.setVolume(GamePreferences.loadMusicVolume());    }
         assetManager.load(AssetDescriptors.GAMEOVER);
         assetManager.load(AssetDescriptors.INFO);
         assetManager.load(AssetDescriptors.INFOGREEN);
-assetManager.load(AssetDescriptors.LOOP);
-assetManager.load(AssetDescriptors.WHISTLE);
+        assetManager.load(AssetDescriptors.LOOP);
+        assetManager.load(AssetDescriptors.WHISTLE);
         assetManager.load(AssetDescriptors.JUMP);
         assetManager.load(AssetDescriptors.POP);
         assetManager.load(AssetDescriptors.CHEER);
@@ -83,11 +84,8 @@ assetManager.load(AssetDescriptors.WHISTLE);
         music.play();
 
         batch = new SpriteBatch();
-        String t1 = "Maribor";
-        String t2 = "Koper";
-        System.out.println(t1.toLowerCase() + ".p");
-       // setScreen(new InstructionsScreen(this));
-        setScreen(new MenuScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.SINGLEPLAYER));
+        setScreen(new MapScreen(this));
+//        setScreen(new MenuScreen(this, new Team(t1, atlas.findRegion(t1.toLowerCase()), atlas.findRegion(t1.toLowerCase() + "p")), new Team(t2, atlas.findRegion(t2.toLowerCase()), atlas.findRegion(t2.toLowerCase() + "p")), Mode.SINGLEPLAYER));
         //setScreen(new GameOverScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),new Player(atlas.findRegion(t2.toLowerCase()),atlas.findRegion(RegionNames.Textures.ICE),10,10,new Vector2(),new World(new Vector2(),false),ID.LEFT,1,1,1),new Player(atlas.findRegion(t2.toLowerCase()),atlas.findRegion(RegionNames.Textures.ICE),100,100,new Vector2(0,0),new World(new Vector2(0,0),false),ID.RIGHT,1,1,1)));
         //setScreen(new SelectionScreen(this,new Team(t1,atlas.findRegion(t1.toLowerCase()),atlas.findRegion(t1.toLowerCase() + "p")),new Team(t2,atlas.findRegion(t2.toLowerCase()),atlas.findRegion(t2.toLowerCase() + "p")),Mode.SINGLEPLAYER));
 
