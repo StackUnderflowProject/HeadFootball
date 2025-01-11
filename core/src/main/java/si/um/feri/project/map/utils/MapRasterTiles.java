@@ -97,7 +97,7 @@ public class MapRasterTiles {
 
         for (int i = 0; i < size * size; i++) {
             array[i] = getRasterTile(zoomXY.zoom, zoomXY.x + factorX[i], zoomXY.y + factorY[i]);
-            System.out.println(zoomXY.zoom + "/" + (zoomXY.x + factorX[i]) + "/" + (zoomXY.y + factorY[i]));
+//            System.out.println(zoomXY.zoom + "/" + (zoomXY.x + factorX[i]) + "/" + (zoomXY.y + factorY[i]));
         }
         return array;
     }
@@ -193,21 +193,13 @@ public class MapRasterTiles {
      * @return
      */
     public static Vector2 getPixelPosition(double lat, double lng, int tileSize, int zoom, int beginTileX, int beginTileY, int height) {
-        double[] worldCoordinate = project(lat, lng, tileSize);
-        // Scale to fit our image
-        double scale = Math.pow(2, zoom);
-
-        // Apply scale to world coordinates to get image coordinates
-        return new Vector2(
-                (int) (Math.floor(worldCoordinate[0] * scale) - (beginTileX * tileSize)),
-                height - (int) (Math.floor(worldCoordinate[1] * scale) - (beginTileY * tileSize) - 1)
-        );
+        return null;
     }
 
-    public static Vector2 getPixelPosition(double lat, double lng, int beginTileX, int beginTileY) {
+    public static Vector2 getPixelPosition(double lat, double lng, int zoom, int beginTileX, int beginTileY) {
         double[] worldCoordinate = project(lat, lng, MapRasterTiles.TILE_SIZE);
         // Scale to fit our image
-        double scale = Math.pow(2, Constants.ZOOM);
+        double scale = Math.pow(2, zoom);
 
         // Apply scale to world coordinates to get image coordinates
         return new Vector2(
