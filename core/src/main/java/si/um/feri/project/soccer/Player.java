@@ -7,6 +7,8 @@ import static si.um.feri.project.soccer.GameConfig.MAX_SPEED_IN_AIR;
 import static si.um.feri.project.soccer.GameConfig.MOVE_IMPULSE;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -16,8 +18,12 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Joint;
+import com.badlogic.gdx.physics.box2d.JointDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
+import com.badlogic.gdx.physics.box2d.joints.RevoluteJointDef;
 
 import java.util.Random;
 
@@ -52,6 +58,9 @@ public class Player extends Sprite {
 
     private Body headBody;
     // Circular body for the head
+    private Body leg;
+    private RevoluteJoint joint;
+
     public boolean grounded = true;
     private Vector2 resetState;
     public Boolean markReset = false;
@@ -89,38 +98,62 @@ public class Player extends Sprite {
 
     // Create the head as a circular body
     private void createHead(World world, float width, float height, Vector2 pos) {
-        // Create the head (rectangular body with rounded top corners)
+        // Create the head (rectangular body)
         BodyDef headDef = new BodyDef();
-        headDef.type = BodyDef.BodyType.DynamicBody;  // Make the head dynamic
-        headDef.position.set(pos.x + width / 2, pos.y + height / 2);  // Position head above the player
+        headDef.type = BodyDef.BodyType.DynamicBody; // Make the head dynamic
+        headDef.position.set(pos.x + width / 2, pos.y + height / 2); // Position head above the player
         headBody = world.createBody(headDef);
         headBody.setFixedRotation(true);
         headBody.setLinearDamping(0.8f);
+
 // Create a rectangular shape for the head
         PolygonShape headShape = new PolygonShape();
-        /*float radius = Math.min(width, height) / 2f; // Adjust based on the desired size
+        headShape.setAsBox((width - 1) / 2, (height - 1) / 2); // Set half-width and height for the rectangle
 
-        float[] vertices = new float[12]; // 6 vertices (x, y) => 12 floats
-        for (int i = 0; i < 6; i++) {
-            float angle = (float) (Math.PI / 3 * i); // 60 degrees for each vertex
-            vertices[i * 2] = radius * (float) Math.cos(angle); // x-coordinate
-            vertices[i * 2 + 1] = radius * (float) Math.sin(angle); // y-coordinate
-        }*/
-
-// Set the vertices in the shape
-        //headShape.set(vertices);
-        headShape.setAsBox((width- 1)/ 2, (height-1) / 2);  // Set half-width and height for the rectangle
         FixtureDef headFixture = new FixtureDef();
         headFixture.shape = headShape;
         headFixture.density = 1f;
         headFixture.friction = 2f;
         headFixture.filter.categoryBits = Bits.PLAYER_BIT;
         headFixture.filter.maskBits = Bits.GROUND_BIT | Bits.BALL_BIT | Bits.PLAYER_BIT;
-        headBody.createFixture(headFixture);  // Attach fixture to the head body
+
+        headBody.createFixture(headFixture); // Attach fixture to the head body
         headBody.setUserData(this);
 
-// Clean up the shape
+// Create the legs
+        /*BodyDef legDef = new BodyDef();
+        legDef.type = BodyDef.BodyType.DynamicBody;
+        legDef.position.set(headBody.getPosition().x, headBody.getPosition().y - (height/2)); // Start leg below the head
+        leg = world.createBody(legDef);
+
+// Create a new shape for the leg
+        PolygonShape legShape = new PolygonShape();
+        legShape.setAsBox(1.5f, 0.2f, new Vector2(0f, -height /8), (float) Math.toRadians(-90.00));
+
+        FixtureDef legFixture = new FixtureDef();
+        legFixture.shape = legShape;
+        legFixture.filter.categoryBits = Bits.LEG_BIT;
+        legFixture.filter.maskBits = Bits.BALL_BIT;
+        leg.createFixture(legFixture);
+
+// Connect head and leg with a revolute joint
+        RevoluteJointDef jointDef = new RevoluteJointDef();
+        jointDef.bodyA = headBody;
+        jointDef.bodyB = leg;
+        jointDef.type = JointDef.JointType.RevoluteJoint;
+// Position the joint at the center bottom of the head
+        jointDef.localAnchorA.set(0, -(height - 1) / 2); // Bottom center of the head
+        jointDef.localAnchorB.set(0, 0);
+        jointDef.enableMotor = true;          // Enable the motor
+        jointDef.collideConnected = false;
+
+        jointDef.motorSpeed = (float) Math.toRadians(360); // Set motor speed (in radians per second, 360°/s)
+        jointDef.maxMotorTorque =1f; // Increase the torque if needed
+        joint = (RevoluteJoint) world.createJoint(jointDef);
+*/
+// Clean up shapes
         headShape.dispose();
+        //legShape.dispose();
 
     }
     public void resetPlayer(){
@@ -155,6 +188,19 @@ public class Player extends Sprite {
             particleEffect.setPosition(getX() + getWidth() / 2, getY()); // Set position to match player's current position
             particleEffect.start();
         }
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            System.out.println("Space pressed: setting motor speed" + joint.getJointAngle());
+            if (joint != null) {
+                joint.setMotorSpeed((float) Math.toRadians(360));
+                joint.setMotorSpeed(100000f);
+
+            }
+        } else {
+            if (joint != null) {
+                joint.setMotorSpeed(0);
+            }
+        }
+
     }
     public void handleAiMovement(float deltaTime, Vector2 targetPosition) {
         // Define maximum speed and impulse values for AI
