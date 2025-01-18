@@ -9,7 +9,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -22,7 +21,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
@@ -62,7 +60,6 @@ public class GameScreen extends ScreenAdapter {
     private Stage stage;
     private Viewport UIviewport;
     private Stage UIstage;
-    private Box2DDebugRenderer renderer = new Box2DDebugRenderer();
     private World world;
     private Skin skin;
     private TextureAtlas gameplayAtlas;
@@ -78,18 +75,17 @@ public class GameScreen extends ScreenAdapter {
     private int kickOffTime = 3;
     private Array<Label> kickOffImage;
     private Label timeLabel;
-    private  Label timeValueLabel;
+    private Label timeValueLabel;
     private Mode mode;
     private Label score1;
     private Label score2;
     private Team team1;
-    private  Team team2;
+    private Team team2;
     private SpriteBatch batch;
     private FPSLogger fpsLogger;
 
 
-    public GameScreen(SoccerGame game,Team team1,Team team2,Mode mode) {
-
+    public GameScreen(SoccerGame game, Team team1, Team team2, Mode mode) {
         this.game = game;
         this.mode = mode;
         this.batch = game.getBatch();
@@ -106,22 +102,22 @@ public class GameScreen extends ScreenAdapter {
         this.team1 = team1;
         viewport = new FitViewport(GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
         stage = new Stage(viewport, game.getBatch());
-        UIviewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
-        UIstage = new Stage(UIviewport,game.getBatch());
-        InputMultiplexer ml = new InputMultiplexer(UIstage,stage);
+        UIviewport = new StretchViewport(GameConfig.HUD_WIDTH, GameConfig.HUD_HEIGHT);
+        UIstage = new Stage(UIviewport, game.getBatch());
+        InputMultiplexer ml = new InputMultiplexer(UIstage, stage);
         Gdx.input.setInputProcessor(ml);
 
         Table rootTable = new Table();
         rootTable.setFillParent(true); // Make the table fill the stage
 
-        BallsManager.initialize(gameplayAtlas,new Vector2(viewport.getWorldWidth() / 2f,viewport.getWorldHeight() / 2f),world);
-        GoalManager.initialize(gameplayAtlas,world,viewport.getWorldWidth());
+        BallsManager.initialize(gameplayAtlas, new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f), world);
+        GoalManager.initialize(gameplayAtlas, world, viewport.getWorldWidth());
 // Create a label style
         BitmapFont font = new BitmapFont(); // Use default font
         // Create the static "Time" label
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = assetManager.get(AssetDescriptors.TITLE_FONT);
-      //  labelStyle.fontColor = Color.BLACK;
+        //  labelStyle.fontColor = Color.BLACK;
 
         timeLabel = new Label("Time:", labelStyle);
         int minutes = elapsedTime / 60;
@@ -132,7 +128,7 @@ public class GameScreen extends ScreenAdapter {
         timeValueLabel = new Label(timeFormatted, labelStyle);
 
 // Create a container for the labels
-        Table labelTable = new Table().debugTable(); // Debug for layout visualization
+        Table labelTable = new Table(); // Debug for layout visualization
         labelTable.pad(0); // Remove extra padding
 
 
@@ -167,7 +163,7 @@ public class GameScreen extends ScreenAdapter {
 
 // Create a table for the time
         Pixmap pixmap1 = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap1.setColor(Color.valueOf("210555" )); // Set color #3A3960
+        pixmap1.setColor(Color.valueOf("210555")); // Set color #3A3960
         pixmap1.fill();
 
 // Create a Texture from the Pixmap
@@ -196,8 +192,9 @@ public class GameScreen extends ScreenAdapter {
 // Create a Drawable from the Texture
         colorBackground = new TextureRegionDrawable(texture);
         timeTable.setBackground(colorBackground);
-        score1 = new Label("0",labelStyle);
-        score2 = new Label("0",labelStyle);;
+        score1 = new Label("0", labelStyle);
+        score2 = new Label("0", labelStyle);
+        ;
         scoreTable.add(score1).colspan(1).pad(5); // Takes 1 column
         scoreTable.add(timeTable).colspan(4); // Takes 8 columns, double the space of score1 and score2 combined
         scoreTable.add(score2).colspan(1).pad(5).row(); // Takes 1 column
@@ -229,7 +226,7 @@ public class GameScreen extends ScreenAdapter {
 // Add the stack to the center of the root table
 
 
-        rootTable.add(im).size(UIviewport.getWorldWidth()/2,UIviewport.getWorldHeight()/3).expand().center(); // Set stack size and center it
+        rootTable.add(im).size(UIviewport.getWorldWidth() / 2, UIviewport.getWorldHeight() / 3).expand().center(); // Set stack size and center it
         rootTable.row();
 
 // Add the root table to the stage
@@ -248,6 +245,7 @@ public class GameScreen extends ScreenAdapter {
                 GamePreferences.toggleMusic(); // Assuming you have a method in SoccerGame for toggling music
                 SoccerGame.loadMusic();
             }
+
             @Override
             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
                 musicButton.addAction(Actions.scaleTo(1.1f, 1.1f, 0.1f)); // Scale up to 120% over 0.1 seconds
@@ -259,12 +257,13 @@ public class GameScreen extends ScreenAdapter {
             }
         });
 
-        ;ImageButton.ImageButtonStyle pauseButtonStyle = new ImageButton.ImageButtonStyle();
+        ;
+        ImageButton.ImageButtonStyle pauseButtonStyle = new ImageButton.ImageButtonStyle();
         rootTable.row();
         pauseButtonStyle.up = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.PAUSE)); // Music on texture
         pauseButtonStyle.checked = new TextureRegionDrawable(gameplayAtlas.findRegion(RegionNames.Textures.PAUSE)); // Music off texture
         ImageButton pauseButton = new ImageButton(pauseButtonStyle);
-       // pauseButton.setChecked(GamePreferences.loadMusicVolume() == 0);
+        // pauseButton.setChecked(GamePreferences.loadMusicVolume() == 0);
         pauseButton.setTransform(true);
         pauseButton.setTouchable(Touchable.enabled);
         pauseButton.setOrigin(Align.center);
@@ -272,10 +271,12 @@ public class GameScreen extends ScreenAdapter {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 System.out.println("PAUSE");
-                if(state != GameState.BEGIN & state != GameState.KICKOFF){
+                if (state != GameState.BEGIN & state != GameState.KICKOFF) {
                     state = (state == GameState.PAUSED) ? GameState.STARTED : GameState.PAUSED;
-                };
+                }
+                ;
             }
+
             @Override
             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
                 pauseButton.addAction(Actions.scaleTo(1.1f, 1.1f, 0.1f)); // Scale up to 120% over 0.1 seconds
@@ -295,7 +296,6 @@ public class GameScreen extends ScreenAdapter {
         stage.addActor(background);
 
 
-
         // stage.addActor(layoutTable);
 
         BodyDef bodyDef = new BodyDef();
@@ -303,24 +303,25 @@ public class GameScreen extends ScreenAdapter {
         bodyDef.type = BodyDef.BodyType.DynamicBody;
 // Set our body's starting position in the world
 
-        bodyDef.position.set(viewport.getWorldWidth()/2f,viewport.getWorldHeight()/2);
+        bodyDef.position.set(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2);
         bodyDef.linearVelocity.y = 0;
         bodyDef.linearVelocity.x = 0f;
 
-        Player1 = new Player(team1.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 - 15f,6),world,ID.LEFT,Input.Keys.A,Input.Keys.D,Input.Keys.W);
-        Player2 = new Player(team2.getPlayer(),gameplayAtlas.findRegion(RegionNames.Textures.ICE),5,5,new Vector2(viewport.getWorldWidth()/2 +10f,6),world,ID.RIGHT,Input.Keys.LEFT,Input.Keys.RIGHT,Input.Keys.UP);
-        PlayerManager.initialize(Player1,Player2);
-        PowerUpManager.initialize(gameplayAtlas,viewport,world);
+        Player1 = new Player(team1.getPlayer(), gameplayAtlas.findRegion(RegionNames.Textures.ICE), 5, 5, new Vector2(viewport.getWorldWidth() / 2 - 15f, 6), world, ID.LEFT, Input.Keys.A, Input.Keys.D, Input.Keys.W);
+        Player2 = new Player(team2.getPlayer(), gameplayAtlas.findRegion(RegionNames.Textures.ICE), 5, 5, new Vector2(viewport.getWorldWidth() / 2 + 10f, 6), world, ID.RIGHT, Input.Keys.LEFT, Input.Keys.RIGHT, Input.Keys.UP);
+        PlayerManager.initialize(Player1, Player2);
+        PowerUpManager.initialize(gameplayAtlas, viewport, world);
 
         world.setContactListener(new MyContactListener());
         createBounds(world);
         Table btn = new Table();
         btn.add(musicButton).padRight(5);
         btn.add(pauseButton).padRight(5);
-        rootTable.add(btn).right().pad(10,0,0,10);
+        rootTable.add(btn).right().pad(10, 0, 0, 10);
         UIstage.addActor(rootTable);
 
     }
+
     public Pixmap extractPixmapFromTextureRegion(TextureRegion textureRegion) {
         TextureData textureData = textureRegion.getTexture().getTextureData();
         if (!textureData.isPrepared()) {
@@ -393,9 +394,8 @@ public class GameScreen extends ScreenAdapter {
             Object userDataA = fixtureA.getBody().getUserData();
             Object userDataB = fixtureB.getBody().getUserData();
             int col = fixtureB.getFilterData().categoryBits | fixtureA.getFilterData().categoryBits;
-            switch (col){
-                case Bits.BALL_BIT | Bits.POWERUP_BIT:
-                {
+            switch (col) {
+                case Bits.BALL_BIT | Bits.POWERUP_BIT: {
                     PowerUp pu = userDataB instanceof PowerUp ? ((PowerUp) userDataB) : ((PowerUp) userDataA);
                     pu.activate();
                     //PowerUpManager.move(pu);
@@ -404,44 +404,47 @@ public class GameScreen extends ScreenAdapter {
                     pu.setToDestroy(true);
                     break;
                 }
-                case Bits.GROUND_BIT | Bits.BALL_BIT :
-                {
+                case Bits.GROUND_BIT | Bits.BALL_BIT: {
                     float randomPitch = 0.8f + (float) Math.random() * 0.4f;
                     pop.play(1.0f, randomPitch, 0.0f);
                     break;
                 }
-                case Bits.PLAYER_BIT | Bits.GROUND_BIT:
-                {
+                case Bits.PLAYER_BIT | Bits.GROUND_BIT: {
                     Player player = userDataB instanceof Player ? ((Player) userDataB) : ((Player) userDataA);
                     player.grounded = true;
                     break;
                 }
-                case Bits.GOALSENSOR_BIT | Bits.BALL_BIT :{
+                case Bits.GOALSENSOR_BIT | Bits.BALL_BIT: {
                     Goal goalSprite = userDataB instanceof Goal ? ((Goal) userDataB) : ((Goal) userDataA);
                     Ball ballSprite = userDataB instanceof Ball ? ((Ball) userDataB) : ((Ball) userDataA);
 
 
-                    if(goalSprite.id == ID.LEFT) {
+                    if (goalSprite.id == ID.LEFT) {
                         Player2.incScore();
 
-                    }
-                    else{
+                    } else {
                         Player1.incScore();
                     }
                     float randomPitch = 0.8f + (float) Math.random() * 0.4f;
-                    cheer.play(1,randomPitch,0);
+                    cheer.play(1, randomPitch, 0);
                     ballSprite.markReset = true;
                     Player1.markReset = true;
                     Player2.markReset = true;
                     score1.setText(Player1.getScore());
                     score2.setText(Player2.getScore());
                     state = GameState.KICKOFF;
-                    if(elapsedTime == 0) {state = GameState.OVERTIME;timeValueLabel.setText("OVER TIME");};
-                    if(state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())game.setScreen(new GameOverScreen(game,team1,team2,Player1,Player2));                    kickOffTime = 3;
+                    if (elapsedTime == 0) {
+                        state = GameState.OVERTIME;
+                        timeValueLabel.setText("OVER TIME");
+                    }
+                    ;
+                    if (state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())
+                        game.setScreen(new GameOverScreen(game, team1, team2, Player1, Player2));
+                    kickOffTime = 3;
                     kickOffImage.get(2).setVisible(true);
                     BallsManager.toggleBall(BallType.NORMAL);
-                    GoalManager.toggleGoal(GoalType.NORMAL,ID.LEFT);
-                    GoalManager.toggleGoal(GoalType.NORMAL,ID.RIGHT);
+                    GoalManager.toggleGoal(GoalType.NORMAL, ID.LEFT);
+                    GoalManager.toggleGoal(GoalType.NORMAL, ID.RIGHT);
                     PlayerManager.unfreezePlayer(ID.LEFT);
                     PlayerManager.unfreezePlayer(ID.RIGHT);
 
@@ -451,28 +454,23 @@ public class GameScreen extends ScreenAdapter {
                     break;
                 }
 
-                case Bits.PLAYER_BIT | Bits.BALL_BIT:
-                {
+                case Bits.PLAYER_BIT | Bits.BALL_BIT: {
                     Player player = userDataB instanceof Player ? ((Player) userDataB) : ((Player) userDataA);
                     BallsManager.lastTouched = player.id;
                     break;
                 }
-                default :
+                default:
                     //BallsManager.toggleBall(BallType.DULL);
 
                     //System.out.println("Unhandled collision: " + col);
 
             }
-            // Debug print to check what's happening
 
         }
 
         @Override
         public void endContact(Contact contact) {
 
-
-
-            // Debug prin
 
         }
 
@@ -489,8 +487,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
 
-
-    public void createBounds(World world){
+    public void createBounds(World world) {
         // Ground (bottom)
         BodyDef groundBodyDef = new BodyDef();
         groundBodyDef.type = BodyDef.BodyType.StaticBody;
@@ -523,9 +520,9 @@ public class GameScreen extends ScreenAdapter {
         // Right Wall
         BodyDef wallRightBodyDef = new BodyDef();
         wallRightBodyDef.type = BodyDef.BodyType.StaticBody;
-        wallRightBodyDef.position.set(viewport.getWorldWidth()-0.1f, 0);
+        wallRightBodyDef.position.set(viewport.getWorldWidth() - 0.1f, 0);
         Body wallRightBody = world.createBody(wallRightBodyDef);
-        groundShape.set(0f, 0f,0f, viewport.getWorldHeight()); // Right wall
+        groundShape.set(0f, 0f, 0f, viewport.getWorldHeight()); // Right wall
         FixtureDef wallRightFixtureDef = new FixtureDef();
         wallRightFixtureDef.shape = groundShape;
         wallRightFixtureDef.friction = 1f;
@@ -537,7 +534,7 @@ public class GameScreen extends ScreenAdapter {
         // Ceiling
         BodyDef ceilBodyDef = new BodyDef();
         ceilBodyDef.type = BodyDef.BodyType.StaticBody;
-        ceilBodyDef.position.set(0, viewport.getWorldHeight()-0.1f); // Adjusted
+        ceilBodyDef.position.set(0, viewport.getWorldHeight() - 0.1f); // Adjusted
         Body ceilBody = world.createBody(ceilBodyDef);
         groundShape.set(0f, 0, viewport.getWorldWidth(), 0); // Ceiling shape
         FixtureDef ceilFixtureDef = new FixtureDef();
@@ -549,7 +546,6 @@ public class GameScreen extends ScreenAdapter {
 
         // Dispose of shape after all fixtures are created
     }
-
 
 
     public static Texture toTexture(TextureRegion region) {
@@ -578,7 +574,7 @@ public class GameScreen extends ScreenAdapter {
         // Update the viewport whenever the window is resized
 
         viewport.update(width, height, true);
-        UIviewport.update(width, height,false);
+        UIviewport.update(width, height, false);
 
 
     }
@@ -601,14 +597,14 @@ public class GameScreen extends ScreenAdapter {
 
         BallsManager.draw(batch);
         batch.end();
-        if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && state == GameState.BEGIN){
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && state == GameState.BEGIN) {
             state = GameState.KICKOFF;
             stack = new Stack();
             Label.LabelStyle labelStyle = new Label.LabelStyle();
             labelStyle.font = assetManager.get(AssetDescriptors.TITLE_FONT);
             labelStyle.font = assetManager.get(AssetDescriptors.GAMEOVER);
-            for(int i = 0;i < kickOffTime;i++){
-                Label l = new Label(String.valueOf(i+1),labelStyle);
+            for (int i = 0; i < kickOffTime; i++) {
+                Label l = new Label(String.valueOf(i + 1), labelStyle);
                 l.setVisible(false);
                 kickOffImage.add(l);
                 stack.add(l);
@@ -616,8 +612,7 @@ public class GameScreen extends ScreenAdapter {
             }
             kickOffImage.get(2).setVisible(true);
             Actor foundActor = UIstage.getRoot().findActor("stack");
-                Table parentTable = (Table) foundActor.getParent();
-                parentTable.debugAll();
+            Table parentTable = (Table) foundActor.getParent();
             Cell cell = parentTable.getCell(foundActor);
 
             cell.setActor(stack).padLeft(20).center();
@@ -628,9 +623,8 @@ public class GameScreen extends ScreenAdapter {
             cell.align(Align.center);
 
         }
-        if(state != GameState.BEGIN  & state != GameState.PAUSED){
+        if (state != GameState.BEGIN & state != GameState.PAUSED) {
             update(delta);
-            renderer.render(world,viewport.getCamera().combined);
         }
 
 
@@ -638,9 +632,14 @@ public class GameScreen extends ScreenAdapter {
         UIstage.draw();
     }
 
-    public void update(float delta){
-        if(elapsedTime == 0) {state = GameState.OVERTIME;timeValueLabel.setText("OVER TIME");};
-        if(state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())game.setScreen(new GameOverScreen(game,team1,team2,Player1,Player2));
+    public void update(float delta) {
+        if (elapsedTime == 0) {
+            state = GameState.OVERTIME;
+            timeValueLabel.setText("OVER TIME");
+        }
+        ;
+        if (state == GameState.OVERTIME && Player1.getScore() != Player2.getScore())
+            game.setScreen(new GameOverScreen(game, team1, team2, Player1, Player2));
         accumulator += delta;
 
         if (accumulator >= 1) {
@@ -648,7 +647,7 @@ public class GameScreen extends ScreenAdapter {
 
             if (state != GameState.KICKOFF && !(elapsedTime == 0)) {
                 elapsedTime--;
-                elapsedTime = Math.max(0,elapsedTime);
+                elapsedTime = Math.max(0, elapsedTime);
                 // Update the displayed time
                 int minutes = elapsedTime / 60;
                 int seconds = elapsedTime % 60;
@@ -677,36 +676,38 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
-        if(state != GameState.KICKOFF){
-            world.step(delta,6,6);
-            if(PowerUpManager.isToClear()) PowerUpManager.clear();
+        if (state != GameState.KICKOFF) {
+            world.step(delta, 6, 6);
+            if (PowerUpManager.isToClear()) PowerUpManager.clear();
             BallsManager.update();
             GoalManager.update();
             PowerUpManager.update(delta);
-            if(Player1.markReset){
+            if (Player1.markReset) {
                 Player1.resetPlayer();
             }
-            if(Player2.markReset){
+            if (Player2.markReset) {
                 Player2.resetPlayer();
             }
             Player1.handleInput(delta);
             Player1.update(delta);
-            if(mode == Mode.LOCALMULTIPLAYER)Player2.handleInput(delta);
+            if (mode == Mode.LOCALMULTIPLAYER) Player2.handleInput(delta);
             else {
-                Player2.handleAiMovement(delta,BallsManager.getCurrentBallPosition());
+                Player2.handleAiMovement(delta, BallsManager.getCurrentBallPosition());
             }
             Player2.update(delta);
         }
     }
+
     @Override
     public void hide() {
         dispose();
     }
+
     private void disposeWorld(World world) {
         if (world != null) {
-            Array<Body> bodies= new Array<>();
+            Array<Body> bodies = new Array<>();
             world.getBodies(bodies);
-            for (Body body :  bodies){
+            for (Body body : bodies) {
                 world.destroyBody(body);
             }
             world.setContactListener(null);

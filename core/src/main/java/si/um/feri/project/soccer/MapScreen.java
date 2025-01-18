@@ -1,5 +1,9 @@
 package si.um.feri.project.soccer;
 
+import static si.um.feri.project.map.utils.Api.fetchEvents;
+import static si.um.feri.project.map.utils.Api.fetchUserEvents;
+import static si.um.feri.project.map.utils.ImageUtils.fetchTextureFromUrl;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
@@ -71,6 +75,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
 
 public class MapScreen extends ScreenAdapter implements GestureDetector.GestureListener {
 
@@ -299,145 +304,11 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
     private void refreshMatches() {
         try {
-            footballMatches = fetchEvents("footballMatch");
-            handballMatches = fetchEvents("handballMatch");
+            footballMatches = fetchEvents("footballMatch", startDate.toString(), endDate.toString());
+            handballMatches = fetchEvents("handballMatch", startDate.toString(), endDate.toString());
         } catch (URISyntaxException | IOException e) {
             Gdx.app.error("Matches", "Failed to refresh matches: " + e.getMessage());
         }
-    }
-
-    public ArrayList<Match> fetchEvents(String sportType) throws URISyntaxException, IOException {
-        String urlString = "http://localhost:3000/" + sportType + "/filterByDateRange/" + startDate + "/" + endDate;
-        String jsonString = getJsonResponse(urlString);
-        return parseEvents(jsonString);
-    }
-
-    private static String getJsonResponse(String urlString) throws URISyntaxException, IOException {
-        URL url = new URI(urlString).toURL();
-
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new RuntimeException("Failed : HTTP error code : " + connection.getResponseCode());
-        }
-
-        // Read response
-        // Read the response
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-
-        connection.disconnect();
-
-        return response.toString();
-    }
-
-    private ArrayList<Match> parseEvents(String jsonString) {
-        ArrayList<Match> matches = new ArrayList<>();
-        JSONArray jsonArray = new JSONArray(jsonString);
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-            Match match = new Match();
-            match._id = jsonObject.getString("_id");
-
-            try {
-                match.date = dateFormat.parse(jsonObject.getString("date"));
-            } catch (ParseException e) {
-                Gdx.app.log("Event", "Failed to parse date: " + jsonObject.getString("date"));
-            }
-
-            match.time = jsonObject.optString("time", "");
-            match.score = jsonObject.optString("score", "");
-            match.location = jsonObject.optString("location", "");
-//            match.season = jsonObject.getInt("season");
-
-            JSONObject homeTeam = jsonObject.getJSONObject("home");
-            match.home = new TeamRecord();
-            match.home._id = homeTeam.getString("_id");
-            match.home.name = homeTeam.getString("name");
-            match.home.logoPath = homeTeam.getString("logoPath");
-
-            JSONObject awayTeam = jsonObject.getJSONObject("away");
-            match.away = new TeamRecord();
-            match.away._id = awayTeam.getString("_id");
-            match.away.name = awayTeam.getString("name");
-            match.away.logoPath = awayTeam.getString("logoPath");
-
-            JSONObject stadiumObject = jsonObject.getJSONObject("stadium");
-            match.stadium = new Stadium();
-            match.stadium._id = stadiumObject.getString("_id");
-            match.stadium.name = stadiumObject.optString("name", "");
-//            match.stadium.season = stadiumObject.getInt("season");
-
-            JSONObject locationObject = stadiumObject.getJSONObject("location");
-            JSONArray coordinates = locationObject.getJSONArray("coordinates");
-            match.stadium.location = new Geolocation(coordinates.getDouble(0), coordinates.getDouble(1));
-
-            matches.add(match);
-        }
-
-        return matches;
-    }
-
-    private ArrayList<Event> fetchUserEvents() throws URISyntaxException, IOException {
-        String urlString = "http://localhost:3000/events/upcoming";
-        String jsonString = getJsonResponse(urlString);
-        return parseUserEvents(jsonString);
-    }
-
-    private ArrayList<Event> parseUserEvents(String jsonString) {
-        ArrayList<Event> events = new ArrayList<>();
-        JSONArray jsonArray = new JSONArray(jsonString);
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-            Event event = new Event();
-            event._id = jsonObject.getString("_id");
-            event.name = jsonObject.getString("name");
-            event.description = jsonObject.getString("description");
-            event.activity = jsonObject.getString("activity");
-            event.date = jsonObject.getString("date");
-            event.time = jsonObject.getString("time");
-//            event.image = jsonObject.getString("image") != null ? jsonObject.getString("image") : "";
-            event.predicted_count = jsonObject.getInt("predicted_count");
-
-            // Parse host
-            JSONObject hostObj = jsonObject.getJSONObject("host");
-            Host host = new Host();
-            host._id = hostObj.getString("_id");
-            host.username = hostObj.getString("username");
-            host.email = hostObj.getString("email");
-            event.host = host;
-
-            // Parse location
-            JSONObject locationObj = jsonObject.getJSONObject("location");
-            JSONArray coordinates = locationObj.getJSONArray("coordinates");
-            event.location = new Geolocation(coordinates.getDouble(1), coordinates.getDouble(0));
-
-            // Parse followers
-            JSONArray followersArray = jsonObject.getJSONArray("followers");
-            event.followers = new ArrayList<>();
-            for (int j = 0; j < followersArray.length(); j++) {
-                event.followers.add(followersArray.getString(j));
-            }
-
-            events.add(event);
-        }
-
-        System.out.println(events.size());
-
-        return events;
     }
 
     public MapScreen(SoccerGame soccerGame) {
@@ -464,8 +335,8 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         initializeMap(currentZoom);
 
         try {
-            footballMatches = fetchEvents("footballMatch");
-            handballMatches = fetchEvents("handballMatch");
+            footballMatches = fetchEvents("footballMatch", startDate.toString(), endDate.toString());
+            handballMatches = fetchEvents("handballMatch", startDate.toString(), endDate.toString());
             userEvents = fetchUserEvents();
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
@@ -703,9 +574,10 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 TextureAtlas atlas = soccerGame.getAssetManager().get(AssetDescriptors.GAMEPLAY);
+                Random rng = new Random();
                 soccerGame.setScreen(new MenuScreen(soccerGame,
-                    new Team(selectedFootballMatch.home.name, atlas.findRegion(selectedFootballMatch.home.name.split(" ")[0].toLowerCase()), atlas.findRegion(selectedFootballMatch.home.name.split(" ")[0].toLowerCase() + "p")),
-                    new Team(selectedFootballMatch.away.name, atlas.findRegion(selectedFootballMatch.away.name.split(" ")[0].toLowerCase()), atlas.findRegion(selectedFootballMatch.away.name.split(" ")[0].toLowerCase() + "p")),
+                    new Team(selectedFootballMatch.home.name, new TextureRegion(Objects.requireNonNull(fetchTextureFromUrl(selectedFootballMatch.home.logoPath))), atlas.findRegion(Players.values()[rng.nextInt(Players.values().length)].getName())),
+                    new Team(selectedFootballMatch.away.name, new TextureRegion(Objects.requireNonNull(fetchTextureFromUrl(selectedFootballMatch.away.logoPath))), atlas.findRegion(Players.values()[rng.nextInt(Players.values().length)].getName())),
                     Mode.SINGLEPLAYER));
             }
         });
@@ -918,27 +790,6 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     @Override
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
-    }
-
-    private Texture fetchTextureFromUrl(String urlString) {
-        InputStream input = null;
-        try {
-            HttpURLConnection connection = (HttpURLConnection) new URI(urlString).toURL().openConnection();
-            connection.setDoInput(true);
-            connection.connect();
-            input = connection.getInputStream();
-
-            // Read the input stream into a byte array
-            byte[] bytes = StreamUtils.copyStreamToByteArray(input);
-
-            // Create a Texture from the byte array
-            return new Texture(new Pixmap(bytes, 0, bytes.length));
-        } catch (Exception e) {
-            Gdx.app.log("Team Image", "Failed to fetch image: " + e.getMessage());
-            return null;
-        } finally {
-            StreamUtils.closeQuietly(input);
-        }
     }
 
     @Override

@@ -58,7 +58,6 @@ public class MenuScreen extends ScreenAdapter {
     private ParticleEffect particleEffect1 = new ParticleEffect();
     private ParticleEffect particleEffect2 = new ParticleEffect();
 
-
     public MenuScreen(SoccerGame game, Team team1, Team team2, Mode mode) {
         this.game = game;
         viewport = new StretchViewport(GameConfig.HUD_WIDTH, GameConfig.HUD_HEIGHT);
@@ -113,7 +112,7 @@ public class MenuScreen extends ScreenAdapter {
             }
         });
 
-        ;
+
         Table layoutTable = new Table();
         layoutTable.setFillParent(true); // Make the table span the entire screen
 
@@ -294,6 +293,18 @@ public class MenuScreen extends ScreenAdapter {
             Actions.scaleTo(1f, 1f, 0.5f, Interpolation.sineOut) // Scale down back to original size
         )));
 
+        TextButton exit = new TextButton("Exit", singleplayerStyle);
+        exit.setTransform(true); // Enable transformations like scaling
+        exit.setOrigin(Align.center);
+        exit.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                float randomPitch = 0.8f + (float) Math.random() * 0.4f;
+
+                SoundManager.coin.play(0.5f, randomPitch, 0f);
+                game.setScreen(new MapScreen(game));
+            }
+        });
 
         // Add buttons to the table
         buttonTable.defaults().pad(10); // Add padding between buttons
@@ -301,7 +312,7 @@ public class MenuScreen extends ScreenAdapter {
         buttonTable.add(singleplayer).center().row();
         buttonTable.add(multiplayer).center().row();
         buttonTable.add(instructions).center().row();
-
+        buttonTable.add(exit).center().row();
 
         return buttonTable;
 
