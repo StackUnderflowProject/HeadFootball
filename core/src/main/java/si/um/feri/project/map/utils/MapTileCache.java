@@ -8,7 +8,7 @@ import java.util.Map;
 public class MapTileCache {
     private static final int MAX_CACHE_SIZE = 100; // Adjust based on memory constraints
 
-    private static final Map<String, Texture> cache = new LinkedHashMap<String, Texture>(MAX_CACHE_SIZE, 0.75f, true) {
+    private static final Map<String, Texture> cache = new LinkedHashMap<>(MAX_CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Texture> eldest) {
             boolean shouldRemove = size() > MAX_CACHE_SIZE;
