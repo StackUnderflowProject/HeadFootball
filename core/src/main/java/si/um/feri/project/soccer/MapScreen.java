@@ -8,6 +8,8 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -42,9 +44,12 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.StreamUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+import io.socket.emitter.Emitter;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import si.um.feri.project.map.WebSocketIO;
 import si.um.feri.project.map.model.Event;
 import si.um.feri.project.map.model.Host;
 import si.um.feri.project.map.model.Match;
@@ -65,7 +70,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -73,6 +81,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
+    private BitmapFont font;
     private Vector3 touchPosition;
 
     private TiledMap tiledMap;
@@ -106,6 +115,15 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     private final Geolocation centerGeolocation = SLOVENIA_CENTER;
     private int currentZoom = 9;
     private final float zoomAdjustment = 0.1f;
+
+    private WebSocketIO webSocketClient;
+    private ArrayList<Match> activeMatches = new ArrayList<>();
+    private ArrayList<Match> previousActiveMatches = new ArrayList<>();
+    private final HashMap<String, Texture> activeMatchesTeamTextures = new HashMap<>();
+    private final HashMap<String, ParticleEffect> goalScoredCelebrationMatches = new HashMap<>();
+    private Texture logoNotLoadedTexture;
+    private Texture labelBgTexture;
+    private Texture labelCelebrationBgTexture;
 
     private String startDate = "2024-04-20";
     private String endDate = "2024-04-30";
@@ -306,6 +324,12 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         return parseEvents(jsonString);
     }
 
+    public ArrayList<Match> fetchEvents(String sportType, String startDate, String endDate) throws URISyntaxException, IOException {
+        String urlString = "http://localhost:3000/" + sportType + "/filterByDateRange/" + startDate + "/" + endDate;
+        String jsonString = getJsonResponse(urlString);
+        return parseEvents(jsonString);
+    }
+
     private static String getJsonResponse(String urlString) throws URISyntaxException, IOException {
         URL url = new URI(urlString).toURL();
 
@@ -434,6 +458,116 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         return events;
     }
 
+    private void drawActiveMatchOverlay(SpriteBatch batch, Match match, float delta) {
+        Vector2 markerPosition = MapRasterTiles.getPixelPosition(
+            match.stadium.location.lat,
+            match.stadium.location.lng,
+            currentZoom,
+            beginTile.x,
+            beginTile.y
+        );
+
+        boolean isLongLabel = match.score.length() > 6; // fixing padding issues for long scores
+
+        float labelX = markerPosition.x - ((isLongLabel) ? 38 : 40);
+        float labelY = markerPosition.y + 35;
+
+        Vector2 labelSize = new Vector2(((isLongLabel) ? 92 : 85), 45);
+
+        // goal celebration animation (different color label and firework effect)
+        ParticleEffect fireworkEffect = goalScoredCelebrationMatches.get(match._id);
+        if (fireworkEffect == null) {
+            batch.draw(labelBgTexture, labelX - 5, labelY - 5, labelSize.x, labelSize.y);
+        } else {
+            batch.draw(labelCelebrationBgTexture, labelX - 5, labelY - 5, labelSize.x, labelSize.y);
+            fireworkEffect.setPosition(markerPosition.x, markerPosition.y);
+            fireworkEffect.update(delta);
+            fireworkEffect.draw(batch);
+            if (fireworkEffect.isComplete()) {
+                goalScoredCelebrationMatches.remove(match._id);
+                fireworkEffect.dispose();
+            }
+        }
+
+        // Draw team logos
+        Texture homeLogoTexture = logoNotLoadedTexture;
+        Texture awayLogoTexture = logoNotLoadedTexture;
+        if (activeMatchesTeamTextures.containsKey("0" + match._id)) homeLogoTexture = activeMatchesTeamTextures.get("0" + match._id);
+        if (activeMatchesTeamTextures.containsKey("1" + match._id)) awayLogoTexture = activeMatchesTeamTextures.get("1" + match._id);
+        batch.draw(homeLogoTexture, labelX, labelY, 20, 30); // home team logo
+        batch.draw(awayLogoTexture, labelX + ((isLongLabel) ? 63 : 55), labelY, 20, 30); // away team logo
+
+        // Draw score
+        font.getData().setScale(0.8f);
+        font.draw(batch, match.score, labelX + 25, labelY + 30);
+
+        // Draw current minute
+        font.getData().setScale(0.5f);
+        font.draw(batch, match.time, labelX + ((isLongLabel) ? 36 : 32), labelY + 10);
+
+        font.getData().setScale(1f);
+    }
+
+    private final Emitter.Listener onWebsocketMessageReceived = new Emitter.Listener() {
+        // handle special event from server
+        @Override
+        public void call(Object... args) {
+            // get today matches
+            String startDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String endDate = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            ArrayList<Match> activeFootballMatches;
+            ArrayList<Match> activeHandballMatches;
+            try {
+                activeFootballMatches = fetchEvents("footballMatch", startDate, endDate);
+                activeHandballMatches = fetchEvents("handballMatch", startDate, endDate);
+            } catch (URISyntaxException | IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            activeMatches = new ArrayList<>();
+            activeFootballMatches.forEach(match -> {if (!match.time.isEmpty()) activeMatches.add(match);});
+            activeHandballMatches.forEach(match -> {if (!match.time.isEmpty()) activeMatches.add(match);});
+
+            activeMatches.forEach(match -> {
+                Match previousMatch = previousActiveMatches.stream()
+                    .filter(pMatch -> Objects.equals(match._id, pMatch._id))
+                    .findFirst()
+                    .orElse(null);
+
+                // if new match start, get the teams logos and store them in map<("0"|"1")+id, Texture>
+                if (previousMatch == null) {
+                    if (!activeMatchesTeamTextures.containsKey("0" + match._id)) {
+                        Gdx.app.postRunnable(() -> {
+                            Texture homeTeamLogo = fetchTextureFromUrl(match.home.logoPath);
+                            if (homeTeamLogo != null) activeMatchesTeamTextures.put("0" + match._id, homeTeamLogo);
+                        });
+                    }
+                    if (!activeMatchesTeamTextures.containsKey("1" + match._id)) {
+                        Gdx.app.postRunnable(() -> {
+                            Texture awayTeamLogo = fetchTextureFromUrl(match.away.logoPath);
+                            if (awayTeamLogo != null) activeMatchesTeamTextures.put("1" + match._id, awayTeamLogo);
+                        });
+                    }
+                } else
+
+                // score changed
+                if (previousMatch != null && !Objects.equals(match.score, previousMatch.score)) {
+                    //System.out.println("Updated score to " + match.score);
+                    if (!goalScoredCelebrationMatches.containsKey(match._id)) {
+                        Gdx.app.postRunnable(() -> {
+                            ParticleEffect particleEffect = new ParticleEffect();
+                            particleEffect.load(Gdx.files.internal("particles/Firework.p"), Gdx.files.internal("particles"));
+                            goalScoredCelebrationMatches.put(match._id, particleEffect); // animation should last 3s, just like particle
+                            particleEffect.start();
+                        });
+                    }
+                }
+            });
+
+            previousActiveMatches = activeMatches;
+        }
+    };
+
     public MapScreen(SoccerGame soccerGame) {
         this.soccerGame = soccerGame;
         initialize();
@@ -442,6 +576,11 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     public void initialize() {
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
+        font = new BitmapFont();
+
+        logoNotLoadedTexture = new Texture("./logoNotLoaded.png");
+        labelBgTexture = new Texture("./labelBg.png");
+        labelCelebrationBgTexture = new Texture("./celebrationLabelBg.png");
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Constants.MAP_WIDTH, Constants.MAP_HEIGHT);
@@ -474,6 +613,10 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         // Update input processor to include stage
         InputMultiplexer multiplexer = getInputMultiplexer();
         Gdx.input.setInputProcessor(multiplexer);
+
+        System.out.println("connecting to ws...");
+        webSocketClient = new WebSocketIO(onWebsocketMessageReceived);
+        webSocketClient.connect("http://localhost:3001"); // "http://164.8.160.143:3001"
     }
 
     // Modify createFilterWindow() to add user events filter
@@ -524,7 +667,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         stage.addActor(filterWindow);
     }
 
-    private void drawMarkers() {
+    private void drawMarkers(float delta) {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
@@ -582,6 +725,10 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
                     GameConfig.STADUIM_SIZE
                 );
             }
+        }
+
+        for (Match activeMatch : activeMatches) {
+            drawActiveMatchOverlay(batch, activeMatch, delta);
         }
 
         batch.end();
@@ -760,10 +907,12 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
         camera.update();
 
-        tiledMapRenderer.setView(camera);
-        tiledMapRenderer.render();
+        if (tiledMapRenderer != null) {
+            tiledMapRenderer.setView(camera);
+            tiledMapRenderer.render();
+        }
 
-        drawMarkers();
+        drawMarkers(delta);
 
         // Update and render stage
         stage.act(delta);
@@ -786,6 +935,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         if (eventMarkerTexture != null) {
             eventMarkerTexture.dispose();
         }
+        if (webSocketClient != null) webSocketClient.dispose();
         stage.dispose();
         skin.dispose();
     }
