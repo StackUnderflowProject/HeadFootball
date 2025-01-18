@@ -41,6 +41,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.StreamUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -53,6 +54,7 @@ import si.um.feri.project.map.model.TeamRecord;
 import si.um.feri.project.map.utils.Constants;
 import si.um.feri.project.map.utils.Geolocation;
 import si.um.feri.project.map.utils.MapRasterTiles;
+import si.um.feri.project.map.utils.MapTileCache;
 import si.um.feri.project.map.utils.ZoomXY;
 
 import java.io.BufferedReader;
@@ -65,6 +67,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
@@ -87,7 +90,6 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     private ArrayList<Event> userEvents;
     private boolean showUserEvents = true;
     private Texture eventMarkerTexture;
-    private Event selectedEvent = null;
     private boolean showFootball = true; // Filter flags
     private boolean showHandball = true;
     private Texture stadiumTexture;
@@ -102,13 +104,13 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     private Table eventDetailsTable;
 
     // Center geolocation
-    private final Geolocation SLOVENIA_CENTER = new Geolocation(46.557314, 15.037771);
+    private final Geolocation SLOVENIA_CENTER = new Geolocation(46.127314, 15.037771);
     private final Geolocation centerGeolocation = SLOVENIA_CENTER;
     private int currentZoom = 9;
     private final float zoomAdjustment = 0.1f;
 
-    private String startDate = "2024-04-20";
-    private String endDate = "2024-04-30";
+    private LocalDate startDate = LocalDate.now();
+    private LocalDate endDate = LocalDate.now().plusDays(1);
     private Label startDateLabel;
     private Label endDateLabel;
 
@@ -128,7 +130,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
         // Start Date Row
         dateTable.add(new Label("Start Date: ", skin)).pad(5);
-        startDateLabel = new Label(startDate, skin);
+        startDateLabel = new Label(startDate.toString(), skin);
         dateTable.add(startDateLabel).pad(5);
         TextButton startDateButton = new TextButton("Select", skin, "round");
         startDateButton.addListener(new ChangeListener() {
@@ -142,7 +144,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
         // End Date Row
         dateTable.add(new Label("End Date: ", skin)).pad(5);
-        endDateLabel = new Label(endDate, skin);
+        endDateLabel = new Label(endDate.toString(), skin);
         dateTable.add(endDateLabel).pad(5);
         TextButton endDateButton = new TextButton("Select", skin, "round");
         endDateButton.addListener(new ChangeListener() {
@@ -208,14 +210,17 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         // Year selection (2024-2025)
         final SelectBox<Integer> yearSelect = new SelectBox<>(skin);
         yearSelect.setItems(2024, 2025);
+        yearSelect.setSelected(isStartDate ? startDate.getYear() : endDate.getYear());
 
         // Month selection (1-12)
         final SelectBox<Integer> monthSelect = new SelectBox<>(skin);
         monthSelect.setItems(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+        monthSelect.setSelected(isStartDate ? startDate.getMonthValue() : endDate.getMonthValue());
 
         // Day selection (1-31)
         final SelectBox<Integer> daySelect = new SelectBox<>(skin);
         updateDays(yearSelect.getSelected(), monthSelect.getSelected(), daySelect);
+        daySelect.setSelected(isStartDate ? startDate.getDayOfMonth() : endDate.getDayOfMonth());
 
         // Add listeners to update days when month/year changes
         monthSelect.addListener(new ChangeListener() {
@@ -252,12 +257,13 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
                     monthSelect.getSelected(),
                     daySelect.getSelected());
 
+
                 if (isStartDate) {
-                    startDate = selectedDate;
-                    startDateLabel.setText(startDate);
+                    startDate = LocalDate.parse(selectedDate);
+                    startDateLabel.setText(startDate.toString());
                 } else {
-                    endDate = selectedDate;
-                    endDateLabel.setText(endDate);
+                    endDate = LocalDate.parse(selectedDate);
+                    endDateLabel.setText(endDate.toString());
                 }
                 datePickerWindow.remove();
             }
@@ -446,7 +452,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Constants.MAP_WIDTH, Constants.MAP_HEIGHT);
         camera.position.set(Constants.MAP_WIDTH / 2f, Constants.MAP_HEIGHT / 2f, 0);
-        camera.zoom = 1f; // Initial zoom
+        camera.zoom = 0.9f; // Initial zoom
         camera.update();
 
         touchPosition = new Vector3();
@@ -709,25 +715,23 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
     private void initializeMap(int zoom) {
         try {
             ZoomXY centerTile = MapRasterTiles.getTileNumber(centerGeolocation.lat, centerGeolocation.lng, zoom);
-            mapTiles = MapRasterTiles.getRasterTileZone(centerTile, Constants.NUM_TILES);
+            mapTiles = MapRasterTiles.getRasterTileZone(centerTile, Constants.NUM_TILES_X, Constants.NUM_TILES_Y);
 
-            beginTile = new ZoomXY(centerTile.zoom, centerTile.x - (Constants.NUM_TILES) / 2, centerTile.y - (Constants.NUM_TILES) / 2);
+            beginTile = new ZoomXY(centerTile.zoom, centerTile.x - (Constants.NUM_TILES_X) / 2, centerTile.y - (Constants.NUM_TILES_Y) / 2);
 
             // Create and populate TiledMap
             if (tiledMap == null) {
                 tiledMap = new TiledMap();
             } else {
-                for (MapLayer layer : tiledMap.getLayers()) {
-                    tiledMap.getLayers().remove(layer);
-                }
+                disposeLayers();
             }
 
             MapLayers layers = tiledMap.getLayers();
-            TiledMapTileLayer layer = new TiledMapTileLayer(Constants.NUM_TILES, Constants.NUM_TILES, MapRasterTiles.TILE_SIZE, MapRasterTiles.TILE_SIZE);
+            TiledMapTileLayer layer = new TiledMapTileLayer(Constants.NUM_TILES_X, Constants.NUM_TILES_Y, MapRasterTiles.TILE_SIZE, MapRasterTiles.TILE_SIZE);
 
             int index = 0;
-            for (int j = Constants.NUM_TILES - 1; j >= 0; j--) {
-                for (int i = 0; i < Constants.NUM_TILES; i++) {
+            for (int j = Constants.NUM_TILES_Y - 1; j >= 0; j--) {
+                for (int i = 0; i < Constants.NUM_TILES_X; i++) {
                     TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
                     cell.setTile(new StaticTiledMapTile(new TextureRegion(mapTiles[index], MapRasterTiles.TILE_SIZE, MapRasterTiles.TILE_SIZE)));
                     layer.setCell(i, j, cell);
@@ -736,15 +740,35 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
             }
             layers.add(layer);
 
-            tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
+            if (tiledMapRenderer == null) {
+                tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
+            }
+
         } catch (IOException e) {
             Gdx.app.log("Map", "Failed to initialize map: " + e.getMessage());
         }
     }
 
+    private void disposeLayers() {
+        for (MapLayer layer : tiledMap.getLayers()) {
+            if (layer instanceof TiledMapTileLayer) {
+                TiledMapTileLayer tileLayer = (TiledMapTileLayer) layer;
+                for (int x = 0; x < tileLayer.getWidth(); x++) {
+                    for (int y = 0; y < tileLayer.getHeight(); y++) {
+                        TiledMapTileLayer.Cell cell = tileLayer.getCell(x, y);
+                        if (cell != null && cell.getTile() != null) {
+                            cell.getTile().getTextureRegion().getTexture().dispose();
+                        }
+                    }
+                }
+            }
+            tiledMap.getLayers().remove(layer);
+        }
+    }
+
     private void clampCameraWithinBounds() {
-        float minX = 0, maxX = MapRasterTiles.TILE_SIZE * Constants.NUM_TILES;
-        float minY = 0, maxY = MapRasterTiles.TILE_SIZE * Constants.NUM_TILES;
+        float minX = 0, maxX = Constants.MAP_WIDTH;
+        float minY = 0, maxY = Constants.MAP_HEIGHT;
         float viewportWidth = camera.viewportWidth * camera.zoom;
         float viewportHeight = camera.viewportHeight * camera.zoom;
 
@@ -788,6 +812,7 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
         }
         stage.dispose();
         skin.dispose();
+        MapTileCache.clearCache();
     }
 
     private void handleInput() {
@@ -823,8 +848,8 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
 
     private int calculateZoomLevel(float zoom) {
-        if (zoom < 0.5f) return 9;
-        return 8;
+        if (zoom < 0.3f) return 10;
+        return 9;
     }
 
     @Override
@@ -866,7 +891,6 @@ public class MapScreen extends ScreenAdapter implements GestureDetector.GestureL
 
                 if (touchPosition.x >= markerPosition.x - 24 && touchPosition.x <= markerPosition.x + 24 &&
                     touchPosition.y >= markerPosition.y - 16 && touchPosition.y <= markerPosition.y + 16) {
-                    selectedEvent = event;
                     updateUserEventDetails(event);
                     return true;
                 }

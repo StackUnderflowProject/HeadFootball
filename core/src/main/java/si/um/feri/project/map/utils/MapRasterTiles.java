@@ -68,9 +68,7 @@ public class MapRasterTiles {
      * @throws IOException
      */
     public static Texture getRasterTile(ZoomXY zoomXY) throws IOException {
-        URL url = new URL(mapServiceUrl + tilesetId + "/" + zoomXY.toString() + format + token);
-        ByteArrayOutputStream bis = fetchTile(url);
-        return getTexture(bis.toByteArray());
+        return MapTileCache.getCachedTile(zoomXY);
     }
 
     /**
@@ -101,6 +99,24 @@ public class MapRasterTiles {
         }
         return array;
     }
+
+    public static Texture[] getRasterTileZone(ZoomXY zoomXY, int width, int height) throws IOException {
+        Texture[] array = new Texture[width * height];
+        int startX = zoomXY.x - (width - 1) / 2;
+        int startY = zoomXY.y - (height - 1) / 2;
+
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                int tileX = startX + col;
+                int tileY = startY + row;
+                int index = row * width + col;
+                array[index] = MapTileCache.getCachedTile(zoomXY.zoom, tileX, tileY);
+            }
+        }
+
+        return array;
+    }
+
 
     /**
      * Gets tile from provided URL and returns it as ByteArrayOutputStream.
