@@ -108,7 +108,7 @@ public class Api {
     }
 
     public static ArrayList<Event> fetchUserEvents() throws URISyntaxException, IOException {
-        String urlString = "http://localhost:3000/events/upcoming";
+        String urlString = "http://"+ Constants.SERVER_IP +":3000/events/upcoming";
         String jsonString = getJsonResponse(urlString);
         return parseUserEvents(jsonString);
     }
