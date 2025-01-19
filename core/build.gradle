@@ -18,8 +18,10 @@ dependencies {
   api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"
   api "org.mini2Dx:universal-tween-engine:$universalTweenVersion"
   api "com.github.tommyettinger:textratypist:1.1.0"
+  api "io.socket:socket.io-client:$websocketVersion"
 
   implementation 'org.json:json:20231013'
+
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"

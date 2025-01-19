@@ -39,7 +39,7 @@ public class SelectionScreen extends ScreenAdapter {
     private Viewport viewport;
     private Stage stage;
     private Skin skin;
-    private Team team11;
+    private Team team1;
     private Team team2;
     private PlayerInputProcessor1 ip1;
     private PlayerInputProcessor1 ip2;
@@ -50,7 +50,7 @@ public class SelectionScreen extends ScreenAdapter {
     public SelectionScreen(SoccerGame game,Team team1,Team team2,Mode mode) {
         this.game = game;
         viewport = new StretchViewport(GameConfig.HUD_WIDTH,GameConfig.HUD_HEIGHT);
-        this.team11 = team1;
+        this.team1 = team1;
         this.team2 = team2;
         this.mode = mode;
         stage = new Stage(viewport, game.getBatch());
@@ -86,17 +86,17 @@ public class SelectionScreen extends ScreenAdapter {
             player2 = createPlayerIcon("Player 2", RegionNames.Textures.CPU).pad(10);
         }
         // Create Team Boxes
-        Table team1Table = createTeamBox(team11,player1);
+        Table team1Table = createTeamBox(team1,player1);
         Table team2Table = createTeamBox(team2,player1);
 
-        rootTable.add(team1Table).minWidth(160).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
+        rootTable.add(team1Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
         rootTable.add(team2Table).minWidth(150).minHeight(150).maxWidth(300).maxHeight(300).expand().pad(0);
         rootTable.row(); // Move to the next row for player icons
 
         playerIconsTable.add(player1).pad(10);
         playerIconsTable.add(player2).pad(10);
 
-        rootTable.add(playerIconsTable).minSize(70).colspan(2).center().padTop(10).row(); // Align icons below both team tables
+        rootTable.add(playerIconsTable).minSize(60).colspan(2).center().padTop(10).row(); // Align icons below both team tables
         TextButton confirmButton = new TextButton("Confirm Selection", skin);
         confirmButton.addListener(new ClickListener() {
             @Override
@@ -105,41 +105,49 @@ public class SelectionScreen extends ScreenAdapter {
                 if(mode == Mode.LOCALMULTIPLAYER){
                     if(ip1.getPlayer1Team() == ip2.getPlayer1Team()){
                         if(ip2.getPlayer1Team() != ip2.getInital()){
-                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                            game.setScreen(new GameScreen(game,team2,team1,mode));
                             return;
                         }
                         if(ip1.getPlayer1Team() != ip1.getInital()){
-                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                            game.setScreen(new GameScreen(game,team2,team1,mode));
                             return;
 
                         }
                         else{
-                            game.setScreen(new GameScreen(game,team11,team2,mode));
+                            game.setScreen(new GameScreen(game,team1,team2,mode));
                         }
                     }
                     else{
                         if(ip1.getPlayer1Team() == 1){
-                            game.setScreen(new GameScreen(game,team11,team2,mode));
+                            game.setScreen(new GameScreen(game,team1,team2,mode));
                         }
                         else{
-                            game.setScreen(new GameScreen(game,team2,team11,mode));
+                            game.setScreen(new GameScreen(game,team2,team1,mode));
                         }
                     }
                 }
                 if(mode == Mode.SINGLEPLAYER){
                     if(ipcpu.getPl() == 1){
-                        game.setScreen(new GameScreen(game,team11,team2,mode));
+                        game.setScreen(new GameScreen(game,team1,team2,mode));
                     }
                     else{
-                        game.setScreen(new GameScreen(game,team2,team11,mode));
+                        game.setScreen(new GameScreen(game,team2,team1,mode));
 
                     }
                 }
-
-
             }
         });
-        rootTable.add(confirmButton).colspan(2).center().padTop(20); // Center the button and add some padding
+        rootTable.add(confirmButton).colspan(2).padTop(10).row(); // Center the button and add some padding
+
+        TextButton backButton = new TextButton("Back", skin, "round");
+        backButton.setPosition(10, stage.getHeight() - backButton.getHeight() - 10);
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new MenuScreen(game, team1, team2, mode));
+            }
+        });
+        stage.addActor(backButton);
 
         if(mode == Mode.SINGLEPLAYER){
             InputMultiplexer inputMultiplexer = new InputMultiplexer();
