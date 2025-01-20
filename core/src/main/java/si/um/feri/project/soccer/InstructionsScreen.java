@@ -126,7 +126,8 @@ public class InstructionsScreen extends ScreenAdapter {
         rootTable.defaults().padBottom(30);
         rootTable.add(new Label("Instructions", labelStyle)).colspan(3).padBottom(10).row();
 
-        rootTable.debug(); // This is for debugging the layout
+        //rootTable.debug(); // This is for debugging the layout
+        //rootTable.debug(); // This is for debugging the layout
 
         // First row: Speed power-up
         Table cellTable1 = new Table();
