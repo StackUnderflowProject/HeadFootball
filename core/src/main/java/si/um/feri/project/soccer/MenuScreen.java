@@ -266,7 +266,7 @@ public class MenuScreen extends ScreenAdapter {
         instructions.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                //game.setScreen(new InstructionsScreen(game));
+                game.setScreen(new InstructionsScreen(game));
                 float randomPitch = 0.8f + (float) Math.random() * 0.4f;
 
                 SoundManager.coin.play(0.5f, randomPitch, 0f);
